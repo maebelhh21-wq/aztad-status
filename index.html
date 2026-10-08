@@ -1,1384 +1,411 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width,
-                   initial-scale=1.0,
-                   maximum-scale=1.0,
-                   user-scalable=no">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta name="theme-color" content="#1F4E78">
+<title>AZTAD Shipment Management</title>
 
-    <title>AZTAD ERP Mobile</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <!-- Tailwind -->
-    <script src="https://cdn.tailwindcss.com"></script>
+<style>
+    * {
+        box-sizing: border-box;
+    }
 
-    <!-- Font Awesome -->
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    body {
+        margin: 0;
+        font-family: Inter, Arial, sans-serif;
+        background: #f8fafc;
+        color: #0f172a;
+    }
 
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 5px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+    }
 
-    <!-- Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
-          rel="stylesheet">
-    const SUPABASE_URL = 'https://YOUR_SUPABASE_PROJECT_ID.supabase.co';
-    const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        aztad: {
-                            header: '#1F4E78',
-                            accent: '#2563eb',
-                            dark: '#0f172a',
-                            panel: '#1e293b'
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif']
-                    }
-                }
-            }
-        }
-    </script>
+    .status-pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
 
-    <style>
+    .status-in-transit {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
 
-        * {
-            -webkit-tap-highlight-color: transparent;
-            box-sizing: border-box;
-        }
+    .status-delivered {
+        background: #dcfce7;
+        color: #166534;
+    }
 
-        html,
-        body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            min-height: 100%;
-            font-family: 'Inter', sans-serif;
-            background: #f8fafc;
-            color: #0f172a;
-        }
+    .status-delayed {
+        background: #fee2e2;
+        color: #991b1b;
+    }
 
-        body {
-            overflow-x: hidden;
-        }
+    .status-cancelled {
+        background: #e5e7eb;
+        color: #374151;
+    }
 
-        /* =========================================
-           APP SHELL
-        ========================================= */
+    .status-processing {
+        background: #ede9fe;
+        color: #6d28d9;
+    }
 
-        #app {
-            width: 100%;
-            min-height: 100vh;
-            background: #f8fafc;
-        }
+    .card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    }
 
-        /* =========================================
-           MOBILE HEADER
-        ========================================= */
+    .table-container {
+        overflow-x: auto;
+    }
 
-        .mobile-header {
-            position: sticky;
-            top: 0;
-            z-index: 40;
-            height: 64px;
-            background: #1F4E78;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 16px;
-            box-shadow: 0 2px 10px rgba(0,0,0,.12);
-        }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
 
-        .header-brand {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+    th {
+        background: #f8fafc;
+        color: #64748b;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        padding: 13px 16px;
+        text-align: left;
+        white-space: nowrap;
+    }
 
-        .brand-icon {
-            width: 38px;
-            height: 38px;
-            border-radius: 11px;
-            background: #2563eb;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,.15);
-        }
+    td {
+        padding: 14px 16px;
+        border-top: 1px solid #f1f5f9;
+        font-size: 14px;
+        white-space: nowrap;
+    }
 
-        .header-title {
-            font-size: 14px;
-            font-weight: 800;
-            line-height: 1.1;
-        }
+    tr:hover td {
+        background: #f8fafc;
+    }
 
-        .header-subtitle {
-            font-size: 9px;
-            color: #bfdbfe;
-            margin-top: 2px;
-        }
+    .modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, .55);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        padding: 20px;
+    }
 
-        /* =========================================
-           PAGE CONTENT
-        ========================================= */
+    .modal.active {
+        display: flex;
+    }
 
-        .page-content {
-            padding: 16px;
-            padding-bottom: 95px;
-        }
+    .modal-box {
+        background: white;
+        width: 100%;
+        max-width: 650px;
+        max-height: 90vh;
+        overflow-y: auto;
+        border-radius: 20px;
+        padding: 24px;
+    }
 
-        .tab-content {
-            animation: fadeIn .18s ease;
-        }
+    .input {
+        width: 100%;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        padding: 11px 13px;
+        outline: none;
+        background: white;
+    }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(5px);
-            }
+    .input:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, .1);
+    }
 
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+    .btn {
+        border: none;
+        border-radius: 10px;
+        padding: 10px 15px;
+        cursor: pointer;
+        font-weight: 700;
+        transition: .2s;
+    }
 
-        /* =========================================
-           BOTTOM NAVIGATION
-        ========================================= */
+    .btn:hover {
+        transform: translateY(-1px);
+    }
 
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 72px;
-            background: rgba(255,255,255,.97);
-            backdrop-filter: blur(15px);
-            border-top: 1px solid #e2e8f0;
-            z-index: 50;
-            display: grid;
-            grid-template-columns: repeat(4,1fr);
-            padding-bottom: env(safe-area-inset-bottom);
-        }
+    .btn-primary {
+        background: #2563eb;
+        color: white;
+    }
 
-        .bottom-nav button {
-            border: none;
-            background: transparent;
-            color: #64748b;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            font-size: 10px;
-            font-weight: 600;
-            cursor: pointer;
-        }
+    .btn-primary:hover {
+        background: #1d4ed8;
+    }
 
-        .bottom-nav button i {
-            font-size: 18px;
-        }
+    .btn-secondary {
+        background: #e2e8f0;
+        color: #334155;
+    }
 
-        .bottom-nav button.active {
-            color: #2563eb;
-        }
+    .btn-danger {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
 
-        .nav-indicator {
-            width: 22px;
-            height: 3px;
-            border-radius: 99px;
-            background: transparent;
-        }
+    .connection-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        display: inline-block;
+    }
 
-        .bottom-nav button.active .nav-indicator {
-            background: #2563eb;
-        }
+    .online {
+        background: #22c55e;
+    }
 
-        /* =========================================
-           SECTION HEADER
-        ========================================= */
+    .offline {
+        background: #ef4444;
+    }
 
-        .section-heading {
-            margin-bottom: 16px;
-        }
+    .connecting {
+        background: #f59e0b;
+    }
 
-        .section-heading h2 {
-            font-size: 21px;
-            font-weight: 800;
-            color: #0f172a;
-            margin: 0;
-        }
+    @media (max-width: 768px) {
 
-        .section-heading p {
-            margin: 5px 0 0;
-            color: #64748b;
-            font-size: 12px;
-            line-height: 1.5;
-        }
-
-        /* =========================================
-           KPI CARDS
-        ========================================= */
-
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0,1fr));
-            gap: 10px;
-            margin-bottom: 18px;
-        }
-
-        .kpi-card {
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 17px;
-            padding: 14px;
-            box-shadow: 0 3px 12px rgba(15,23,42,.05);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .kpi-card::before {
-            content: "";
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 4px;
-            background: #2563eb;
-        }
-
-        .kpi-card.green::before {
-            background: #10b981;
-        }
-
-        .kpi-card.orange::before {
-            background: #f59e0b;
-        }
-
-        .kpi-card.red::before {
-            background: #ef4444;
-        }
-
-        .kpi-label {
-            font-size: 9px;
-            text-transform: uppercase;
-            letter-spacing: .05em;
-            color: #64748b;
-            font-weight: 700;
-        }
-
-        .kpi-value {
-            margin-top: 5px;
-            font-size: 22px;
-            line-height: 1.1;
-            font-weight: 800;
-            color: #0f172a;
-        }
-
-        .kpi-value.green {
-            color: #059669;
-        }
-
-        .kpi-value.orange {
-            color: #d97706;
-        }
-
-        .kpi-description {
-            margin-top: 5px;
-            font-size: 9px;
-            color: #94a3b8;
-        }
-
-        /* =========================================
-           PANELS
-        ========================================= */
-
-        .panel {
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 18px;
-            box-shadow: 0 3px 15px rgba(15,23,42,.05);
-            overflow: hidden;
-        }
-
-        .panel-header {
-            padding: 15px;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .panel-title {
-            font-size: 14px;
-            font-weight: 800;
-            color: #0f172a;
-        }
-
-        .panel-subtitle {
-            margin-top: 4px;
-            font-size: 10px;
-            color: #64748b;
-        }
-
-        .panel-body {
-            padding: 15px;
-        }
-
-        /* =========================================
-           CHART
-        ========================================= */
-
-        .chart-container {
-            height: 280px;
-            position: relative;
-        }
-
-        /* =========================================
-           SEARCH / FILTERS
-        ========================================= */
-
-        .search-box {
-            position: relative;
-            margin-bottom: 10px;
-        }
-
-        .search-box i {
-            position: absolute;
-            left: 13px;
-            top: 13px;
-            color: #94a3b8;
-            font-size: 13px;
-        }
-
-        .search-box input {
-            width: 100%;
-            height: 42px;
-            border-radius: 12px;
-            border: 1px solid #dbe2ea;
-            background: white;
-            padding: 0 12px 0 36px;
-            outline: none;
-            font-size: 12px;
-            color: #0f172a;
-        }
-
-        .search-box input:focus {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37,99,235,.10);
-        }
-
-        .filter-row {
-            display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            padding-bottom: 3px;
-            margin-bottom: 14px;
-        }
-
-        .filter-row::-webkit-scrollbar {
+        .desktop-only {
             display: none;
         }
 
-        .filter-select {
-            min-width: 145px;
-            height: 38px;
-            padding: 0 10px;
-            border-radius: 10px;
-            border: 1px solid #dbe2ea;
-            background: white;
-            color: #334155;
-            font-size: 11px;
-            outline: none;
-        }
-
-        /* =========================================
-           BUTTONS
-        ========================================= */
-
-        .primary-button {
-            width: 100%;
-            height: 44px;
-            border: none;
-            border-radius: 12px;
-            background: #2563eb;
-            color: white;
-            font-size: 12px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(37,99,235,.18);
-        }
-
-        .primary-button:active {
-            transform: scale(.98);
-        }
-
-        .secondary-button {
-            height: 42px;
-            padding: 0 14px;
-            border-radius: 11px;
-            border: 1px solid #dbe2ea;
-            background: white;
-            color: #334155;
-            font-size: 11px;
-            font-weight: 700;
-        }
-
-        .add-button {
-            position: fixed;
-            right: 18px;
-            bottom: 88px;
-            width: 54px;
-            height: 54px;
-            border-radius: 18px;
-            border: none;
-            background: #2563eb;
-            color: white;
-            box-shadow: 0 8px 25px rgba(37,99,235,.35);
-            z-index: 35;
-            font-size: 20px;
-        }
-
-        /* =========================================
-           SHIPMENT CARDS
-        ========================================= */
-
-        .shipment-list {
-            display: flex;
+        .mobile-stack {
             flex-direction: column;
-            gap: 11px;
         }
 
-        .shipment-card {
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 17px;
-            overflow: hidden;
-            box-shadow: 0 3px 12px rgba(15,23,42,.05);
-        }
-
-        .shipment-card-header {
-            padding: 13px 14px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            border-bottom: 1px solid #eef2f7;
-        }
-
-        .shipment-id {
-            font-size: 13px;
-            font-weight: 800;
-            color: #2563eb;
-        }
-
-        .shipment-supplier {
-            font-size: 10px;
-            color: #64748b;
-            margin-top: 3px;
-        }
-
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 5px 8px;
-            border-radius: 999px;
-            font-size: 8px;
-            font-weight: 800;
-            white-space: nowrap;
-        }
-
-        .badge-delivered {
-            background: #dcfce7;
-            color: #15803d;
-        }
-
-        .badge-production {
-            background: #fef3c7;
-            color: #b45309;
-        }
-
-        .badge-pending {
-            background: #fee2e2;
-            color: #b91c1c;
-        }
-
-        .badge-shipped {
-            background: #dbeafe;
-            color: #1d4ed8;
-        }
-
-        .shipment-body {
-            padding: 14px;
-        }
-
-        .shipment-description {
-            font-size: 12px;
-            font-weight: 700;
-            color: #1e293b;
-            line-height: 1.5;
-            margin-bottom: 12px;
-        }
-
-        .shipment-grid {
-            display: grid;
-            grid-template-columns: repeat(2,1fr);
-            gap: 10px;
-        }
-
-        .shipment-field {
-            min-width: 0;
-        }
-
-        .field-label {
-            font-size: 8px;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: .04em;
-            font-weight: 700;
-        }
-
-        .field-value {
-            font-size: 11px;
-            color: #334155;
-            font-weight: 600;
-            margin-top: 2px;
-            word-break: break-word;
-        }
-
-        .field-value.money {
-            color: #059669;
-        }
-
-        .lead-time-box {
-            margin-top: 13px;
-            padding: 11px;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-        }
-
-        .lead-time-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .lead-time-title {
-            font-size: 9px;
-            color: #64748b;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-
-        .lead-time-total {
-            font-size: 14px;
-            color: #d97706;
-            font-weight: 800;
-        }
-
-        .stage-row {
-            display: grid;
-            grid-template-columns: repeat(7,1fr);
-            gap: 3px;
-            margin-top: 9px;
-        }
-
-        .stage {
-            text-align: center;
-        }
-
-        .stage-label {
-            font-size: 7px;
-            color: #94a3b8;
-        }
-
-        .stage-value {
-            margin-top: 2px;
-            font-size: 9px;
-            font-weight: 800;
-            color: #334155;
-        }
-
-        .shipment-actions {
-            padding: 10px 14px;
-            border-top: 1px solid #eef2f7;
-            display: flex;
-            justify-content: flex-end;
-            gap: 8px;
-        }
-
-        .icon-button {
-            width: 35px;
-            height: 35px;
-            border-radius: 10px;
-            border: 1px solid #e2e8f0;
-            background: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
-
-        .icon-button.edit {
-            color: #2563eb;
-        }
-
-        .icon-button.delete {
-            color: #ef4444;
-        }
-
-        /* =========================================
-           SUPPLIER CARDS
-        ========================================= */
-
-        .supplier-list,
-        .reorder-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .supplier-card {
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            padding: 14px;
-            box-shadow: 0 3px 12px rgba(15,23,42,.04);
-        }
-
-        .supplier-top {
-            display: flex;
-            align-items: center;
-            gap: 11px;
-        }
-
-        .supplier-avatar {
-            width: 42px;
-            height: 42px;
-            border-radius: 13px;
-            background: #dbeafe;
-            color: #1d4ed8;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            font-size: 13px;
-        }
-
-        .supplier-name {
-            font-size: 12px;
-            font-weight: 800;
-            color: #1e293b;
-        }
-
-        .supplier-origin {
-            margin-top: 3px;
-            font-size: 9px;
-            color: #64748b;
-        }
-
-        .supplier-info {
-            display: grid;
-            grid-template-columns: repeat(2,1fr);
-            gap: 9px;
-            margin-top: 13px;
-            padding-top: 12px;
-            border-top: 1px solid #eef2f7;
-        }
-
-        /* =========================================
-           REORDER CARDS
-        ========================================= */
-
-        .reorder-card {
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            padding: 14px;
-        }
-
-        .reorder-top {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 10px;
-        }
-
-        .reorder-code {
-            font-size: 10px;
-            color: #2563eb;
-            font-weight: 800;
-        }
-
-        .reorder-name {
-            font-size: 12px;
-            font-weight: 700;
-            margin-top: 3px;
-            color: #1e293b;
-        }
-
-        .urgency {
-            padding: 5px 8px;
-            border-radius: 999px;
-            font-size: 8px;
-            font-weight: 800;
-        }
-
-        .urgency-critical {
-            background: #fee2e2;
-            color: #dc2626;
-        }
-
-        .urgency-high {
-            background: #fef3c7;
-            color: #d97706;
-        }
-
-        .urgency-medium {
-            background: #dbeafe;
-            color: #2563eb;
-        }
-
-        .reorder-stats {
-            display: grid;
-            grid-template-columns: repeat(3,1fr);
-            gap: 7px;
-            margin-top: 13px;
-        }
-
-        .reorder-stat {
-            background: #f8fafc;
-            border-radius: 9px;
-            padding: 8px;
-            text-align: center;
-        }
-
-        .reorder-stat-label {
-            font-size: 7px;
-            color: #94a3b8;
-            text-transform: uppercase;
-        }
-
-        .reorder-stat-value {
-            margin-top: 3px;
-            font-size: 11px;
-            font-weight: 800;
-        }
-
-        /* =========================================
-           MODAL / FORM
-        ========================================= */
-
-        .modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(15,23,42,.60);
-            backdrop-filter: blur(5px);
-            z-index: 100;
-            display: none;
-            align-items: flex-end;
-        }
-
-        .modal.open {
-            display: flex;
-        }
-
-        .modal-content {
+        .mobile-full {
             width: 100%;
-            max-height: 94vh;
-            overflow-y: auto;
-            background: white;
-            border-radius: 24px 24px 0 0;
+        }
+
+        .modal-box {
             padding: 18px;
-            animation: slideUp .2s ease;
-            padding-bottom: calc(22px + env(safe-area-inset-bottom));
         }
 
-        @keyframes slideUp {
-            from {
-                transform: translateY(100%);
-            }
-
-            to {
-                transform: translateY(0);
-            }
+        td,
+        th {
+            padding: 11px 12px;
         }
-
-        .modal-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 18px;
-        }
-
-        .modal-title {
-            font-size: 17px;
-            font-weight: 800;
-            color: #0f172a;
-        }
-
-        .close-button {
-            width: 36px;
-            height: 36px;
-            border: none;
-            border-radius: 10px;
-            background: #f1f5f9;
-            color: #64748b;
-        }
-
-        .form-group {
-            margin-bottom: 13px;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 6px;
-            font-size: 10px;
-            font-weight: 700;
-            color: #475569;
-        }
-
-        .form-input,
-        .form-select,
-        .form-textarea {
-            width: 100%;
-            border: 1px solid #dbe2ea;
-            border-radius: 11px;
-            background: #f8fafc;
-            padding: 11px;
-            font-family: inherit;
-            font-size: 12px;
-            color: #0f172a;
-            outline: none;
-        }
-
-        .form-input:focus,
-        .form-select:focus,
-        .form-textarea:focus {
-            border-color: #2563eb;
-            background: white;
-            box-shadow: 0 0 0 3px rgba(37,99,235,.10);
-        }
-
-        .form-textarea {
-            resize: vertical;
-            min-height: 75px;
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(2,1fr);
-            gap: 10px;
-        }
-
-        .stage-form-grid {
-            display: grid;
-            grid-template-columns: repeat(2,1fr);
-            gap: 8px;
-            background: #f8fafc;
-            padding: 11px;
-            border-radius: 13px;
-            border: 1px solid #e2e8f0;
-        }
-
-        .form-actions {
-            display: grid;
-            grid-template-columns: 1fr 1.5fr;
-            gap: 9px;
-            margin-top: 18px;
-        }
-
-        /* =========================================
-           EMPTY STATE
-        ========================================= */
-
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: #94a3b8;
-        }
-
-        .empty-state i {
-            font-size: 35px;
-            margin-bottom: 10px;
-        }
-
-        .empty-state p {
-            font-size: 12px;
-        }
-
-        /* =========================================
-           DESKTOP ENHANCEMENT
-        ========================================= */
-
-        @media (min-width: 768px) {
-
-            .page-content {
-                max-width: 1100px;
-                margin: auto;
-                padding: 25px;
-                padding-bottom: 40px;
-            }
-
-            .bottom-nav {
-                left: 50%;
-                transform: translateX(-50%);
-                width: 600px;
-                border: 1px solid #e2e8f0;
-                border-radius: 18px 18px 0 0;
-            }
-
-            .add-button {
-                right: calc(50% - 530px);
-            }
-
-            .mobile-header {
-                padding-left: calc((100% - 1060px)/2);
-                padding-right: calc((100% - 1060px)/2);
-            }
-
-            .shipment-grid {
-                grid-template-columns: repeat(4,1fr);
-            }
-
-            .modal {
-                align-items: center;
-                justify-content: center;
-            }
-
-            .modal-content {
-                width: min(700px,95vw);
-                max-height: 90vh;
-                border-radius: 22px;
-            }
-
-            .form-grid {
-                grid-template-columns: repeat(3,1fr);
-            }
-
-            .stage-form-grid {
-                grid-template-columns: repeat(4,1fr);
-            }
-        }
-
-    </style>
+    }
+</style>
 </head>
 
 <body>
 
-<div id="app">
+<!-- =========================
+     HEADER
+========================= -->
 
-    <!-- =========================================
-         MOBILE HEADER
-    ========================================== -->
+<header class="bg-slate-950 text-white sticky top-0 z-50">
 
-    <header class="mobile-header">
+    <div class="max-w-7xl mx-auto px-4 py-4">
 
-        <div class="header-brand">
-
-            <div class="brand-icon">
-                <i class="fa-solid fa-boxes-stacked"></i>
-            </div>
+        <div class="flex items-center justify-between gap-4">
 
             <div>
-                <div class="header-title">
-                    AZTAD ERP
-                </div>
+                <h1 class="text-xl font-bold">
+                    AZTAD
+                </h1>
 
-                <div class="header-subtitle">
-                    Procurement & MRP
-                </div>
+                <p class="text-xs text-slate-400">
+                    Enterprise Procurement & MRP
+                </p>
+            </div>
+
+            <div class="flex items-center gap-2 text-xs">
+
+                <span id="connectionDot"
+                      class="connection-dot connecting">
+                </span>
+
+                <span id="connectionText">
+                    Connecting...
+                </span>
+
             </div>
 
         </div>
 
+    </div>
+
+</header>
+
+
+<!-- =========================
+     MAIN
+========================= -->
+
+<main class="max-w-7xl mx-auto px-4 py-6">
+
+    <!-- Page Header -->
+
+    <div class="flex items-center justify-between gap-4 mb-6 mobile-stack">
+
+        <div>
+            <h2 class="text-2xl font-bold">
+                Shipment Management
+            </h2>
+
+            <p class="text-sm text-slate-500 mt-1">
+                Manage shipment status, lead times and logistics information.
+            </p>
+        </div>
+
         <button
-            onclick="app.exportToCSV()"
-            style="
-                width:38px;
-                height:38px;
-                border-radius:11px;
-                border:1px solid rgba(255,255,255,.2);
-                background:rgba(255,255,255,.08);
-                color:white;
-            ">
-
-            <i class="fa-solid fa-file-export"></i>
-
+            onclick="openShipmentModal()"
+            class="btn btn-primary mobile-full">
+            + Add Shipment
         </button>
 
-    </header>
-
-
-    <!-- =========================================
-         MAIN CONTENT
-    ========================================== -->
-
-    <main class="page-content">
-
-
-        <!-- =====================================
-             DASHBOARD
-        ====================================== -->
-
-        <section id="tab-dashboard"
-                 class="tab-content">
-
-            <div class="section-heading">
-
-                <h2>
-                    Executive Dashboard
-                </h2>
-
-                <p>
-                    Procurement performance and lead-time overview
-                </p>
-
-            </div>
-
-
-            <div class="kpi-grid">
-
-                <div class="kpi-card">
-
-                    <div class="kpi-label">
-                        Total Packages
-                    </div>
-
-                    <div id="dash-kpi-total-pkg"
-                         class="kpi-value">
-                        4
-                    </div>
-
-                    <div class="kpi-description">
-                        Active procurement batches
-                    </div>
-
-                </div>
-
-
-                <div class="kpi-card green">
-
-                    <div class="kpi-label">
-                        Total Value
-                    </div>
-
-                    <div id="dash-kpi-total-val"
-                         class="kpi-value green">
-                        $149,632
-                    </div>
-
-                    <div class="kpi-description">
-                        Procurement commitments
-                    </div>
-
-                </div>
-
-
-                <div class="kpi-card">
-
-                    <div class="kpi-label">
-                        Avg Lead Time
-                    </div>
-
-                    <div id="dash-kpi-avg-lt"
-                         class="kpi-value">
-                        83.8d
-                    </div>
-
-                    <div id="dash-kpi-schedule-status"
-                         class="kpi-description">
-                        On track
-                    </div>
-
-                </div>
-
-
-                <div class="kpi-card orange">
-
-                    <div class="kpi-label">
-                        Bottlenecks
-                    </div>
-
-                    <div id="dash-kpi-bottlenecks"
-                         class="kpi-value orange">
-                        2
-                    </div>
-
-                    <div class="kpi-description">
-                        Requires attention
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- CHART -->
-
-            <div class="panel">
-
-                <div class="panel-header">
-
-                    <div class="panel-title">
-                        Lead Time Performance
-                    </div>
-
-                    <div class="panel-subtitle">
-                        Target vs actual average by procurement stage
-                    </div>
-
-                </div>
-
-                <div class="panel-body">
-
-                    <div class="chart-container">
-                        <canvas id="stageChart"></canvas>
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- Quick Summary -->
-
-            <div style="height:14px"></div>
-
-            <div class="panel">
-
-                <div class="panel-header">
-
-                    <div class="panel-title">
-                        Procurement Summary
-                    </div>
-
-                </div>
-
-                <div class="panel-body">
-
-                    <div class="shipment-grid">
-
-                        <div class="shipment-field">
-
-                            <div class="field-label">
-                                Target
-                            </div>
-
-                            <div class="field-value">
-                                87 Days
-                            </div>
-
-                        </div>
-
-                        <div class="shipment-field">
-
-                            <div class="field-label">
-                                Average
-                            </div>
-
-                            <div id="summary-average"
-                                 class="field-value">
-                                83.8 Days
-                            </div>
-
-                        </div>
-
-                        <div class="shipment-field">
-
-                            <div class="field-label">
-                                Suppliers
-                            </div>
-
-                            <div id="summary-suppliers"
-                                 class="field-value">
-                                4
-                            </div>
-
-                        </div>
-
-                        <div class="shipment-field">
-
-                            <div class="field-label">
-                                Packages
-                            </div>
-
-                            <div id="summary-packages"
-                                 class="field-value">
-                                4
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- =====================================
-             SHIPMENTS
-        ====================================== -->
-
-        <section id="tab-shipments"
-                 class="tab-content"
-                 style="display:none">
-
-            <div class="section-heading">
-
-                <h2>
-                    Shipments
-                </h2>
-
-                <p>
-                    Track procurement packages and delivery progress
-                </p>
-
-            </div>
-
-
-            <!-- KPIs -->
-
-            <div class="kpi-grid">
-
-                <div class="kpi-card">
-
-                    <div class="kpi-label">
-                        Packages
-                    </div>
-
-                    <div id="kpi-shipment-pkgs"
-                         class="kpi-value">
-                        4
-                    </div>
-
-                </div>
-
-                <div class="kpi-card green">
-
-                    <div class="kpi-label">
-                        Value
-                    </div>
-
-                    <div id="kpi-shipment-value"
-                         class="kpi-value green">
-                        $149K
-                    </div>
-
-                </div>
-
-                <div class="kpi-card">
-
-                    <div class="kpi-label">
-                        Suppliers
-                    </div>
-
-                    <div id="kpi-shipment-suppliers"
-                         class="kpi-value">
-                        4
-                    </div>
-
-                </div>
-
-                <div class="kpi-card orange">
-
-                    <div class="kpi-label">
-                        Bottlenecks
-                    </div>
-
-                    <div id="kpi-shipment-bottlenecks"
-                         class="kpi-value orange">
-                        2
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- Search -->
-
-            <div class="search-box">
-
-                <i class="fa-solid fa-magnifying-glass"></i>
+    </div>
+
+
+    <!-- =========================
+         DASHBOARD CARDS
+    ========================= -->
+
+    <section class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+
+        <div class="card p-4">
+            <p class="text-xs text-slate-500">
+                Total Shipments
+            </p>
+
+            <p id="totalShipments"
+               class="text-2xl font-bold mt-2">
+                0
+            </p>
+        </div>
+
+        <div class="card p-4">
+            <p class="text-xs text-slate-500">
+                Pending
+            </p>
+
+            <p id="pendingShipments"
+               class="text-2xl font-bold mt-2 text-amber-600">
+                0
+            </p>
+        </div>
+
+        <div class="card p-4">
+            <p class="text-xs text-slate-500">
+                In Transit
+            </p>
+
+            <p id="transitShipments"
+               class="text-2xl font-bold mt-2 text-blue-600">
+                0
+            </p>
+        </div>
+
+        <div class="card p-4">
+            <p class="text-xs text-slate-500">
+                Delivered
+            </p>
+
+            <p id="deliveredShipments"
+               class="text-2xl font-bold mt-2 text-green-600">
+                0
+            </p>
+        </div>
+
+        <div class="card p-4">
+            <p class="text-xs text-slate-500">
+                Delayed
+            </p>
+
+            <p id="delayedShipments"
+               class="text-2xl font-bold mt-2 text-red-600">
+                0
+            </p>
+        </div>
+
+    </section>
+
+
+    <!-- =========================
+         SEARCH / FILTER
+    ========================= -->
+
+    <section class="card p-4 mb-6">
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1">
+                    Search
+                </label>
 
                 <input
-                    id="shipment-search"
+                    id="searchInput"
                     type="text"
-                    placeholder="Search package, supplier or goods..."
-                    oninput="app.renderShipments()">
-
+                    class="input"
+                    placeholder="Search shipment..."
+                    oninput="renderShipments()">
             </div>
 
 
-            <!-- Filters -->
-
-            <div class="filter-row">
-
-                <select
-                    id="shipment-category-filter"
-                    class="filter-select"
-                    onchange="app.renderShipments()">
-
-                    <option value="ALL">
-                        All Categories
-                    </option>
-
-                    <option value="Raw Materials / Paper">
-                        Paper
-                    </option>
-
-                    <option value="Raw Materials / Chemicals">
-                        Chemicals
-                    </option>
-
-                    <option value="Equipment / Tooling">
-                        Equipment
-                    </option>
-
-                    <option value="Consumables & Tooling">
-                        Consumables
-                    </option>
-
-                </select>
-
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1">
+                    Status
+                </label>
 
                 <select
-                    id="shipment-status-filter"
-                    class="filter-select"
-                    onchange="app.renderShipments()">
+                    id="statusFilter"
+                    class="input"
+                    onchange="renderShipments()">
 
-                    <option value="ALL">
+                    <option value="">
                         All Statuses
-                    </option>
-
-                    <option value="Delivered / Released">
-                        Delivered
-                    </option>
-
-                    <option value="In Production">
-                        Production
                     </option>
 
                     <option value="Pending">
                         Pending
                     </option>
 
-                    <option value="Shipped / In Transit">
+                    <option value="Processing">
+                        Processing
+                    </option>
+
+                    <option value="In Transit">
                         In Transit
+                    </option>
+
+                    <option value="Delivered">
+                        Delivered
+                    </option>
+
+                    <option value="Delayed">
+                        Delayed
+                    </option>
+
+                    <option value="Cancelled">
+                        Cancelled
                     </option>
 
                 </select>
@@ -1386,2623 +413,595 @@
             </div>
 
 
-            <!-- Shipment Cards -->
-
-            <div id="shipment-list"
-                 class="shipment-list">
-            </div>
-
-
-            <!-- Mobile Summary -->
-
-            <div style="height:12px"></div>
-
-            <div class="panel">
-
-                <div class="panel-header">
-
-                    <div class="panel-title">
-                        Lead Time Summary
-                    </div>
-
-                </div>
-
-                <div class="panel-body">
-
-                    <div class="shipment-grid">
-
-                        <div class="shipment-field">
-
-                            <div class="field-label">
-                                Avg Lead Time
-                            </div>
-
-                            <div id="mobile-total-lt"
-                                 class="field-value">
-                                83.8 Days
-                            </div>
-
-                        </div>
-
-                        <div class="shipment-field">
-
-                            <div class="field-label">
-                                Target
-                            </div>
-
-                            <div class="field-value">
-                                87 Days
-                            </div>
-
-                        </div>
-
-                        <div class="shipment-field">
-
-                            <div class="field-label">
-                                Variance
-                            </div>
-
-                            <div id="mobile-variance"
-                                 class="field-value">
-                                -3.2 Days
-                            </div>
-
-                        </div>
-
-                        <div class="shipment-field">
-
-                            <div class="field-label">
-                                Performance
-                            </div>
-
-                            <div id="mobile-performance"
-                                 class="field-value"
-                                 style="color:#059669">
-                                AHEAD
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- =====================================
-             SUPPLIERS
-        ====================================== -->
-
-        <section id="tab-suppliers"
-                 class="tab-content"
-                 style="display:none">
-
-            <div class="section-heading">
-
-                <h2>
-                    Suppliers
-                </h2>
-
-                <p>
-                    Supplier directory and procurement performance
-                </p>
-
-            </div>
-
-
-            <button
-                class="primary-button"
-                onclick="app.showSupplierMessage()">
-
-                <i class="fa-solid fa-user-plus"></i>
-
-                Register New Supplier
-
-            </button>
-
-
-            <div style="height:14px"></div>
-
-
-            <div id="supplier-list"
-                 class="supplier-list">
-            </div>
-
-        </section>
-
-
-        <!-- =====================================
-             MRP
-        ====================================== -->
-
-        <section id="tab-reorder"
-                 class="tab-content"
-                 style="display:none">
-
-            <div class="section-heading">
-
-                <h2>
-                    MRP Planning
-                </h2>
-
-                <p>
-                    Material requirements and reorder priorities
-                </p>
-
-            </div>
-
-
-            <button
-                class="primary-button"
-                onclick="app.showReorderMessage()">
-
-                <i class="fa-solid fa-plus"></i>
-
-                Add Material Item
-
-            </button>
-
-
-            <div style="height:14px"></div>
-
-
-            <div id="reorder-list"
-                 class="reorder-list">
-            </div>
-
-        </section>
-
-    </main>
-
-
-    <!-- =========================================
-         FLOATING ADD BUTTON
-    ========================================== -->
-
-    <button
-        class="add-button"
-        onclick="app.openShipmentModal()">
-
-        <i class="fa-solid fa-plus"></i>
-
-    </button>
-
-
-    <!-- =========================================
-         BOTTOM NAVIGATION
-    ========================================== -->
-
-    <nav class="bottom-nav">
-
-        <button
-            id="nav-dashboard"
-            class="active"
-            onclick="app.switchTab('tab-dashboard')">
-
-            <i class="fa-solid fa-chart-pie"></i>
-
-            <span>Dashboard</span>
-
-            <div class="nav-indicator"></div>
-
-        </button>
-
-
-        <button
-            id="nav-shipments"
-            onclick="app.switchTab('tab-shipments')">
-
-            <i class="fa-solid fa-boxes-stacked"></i>
-
-            <span>Shipments</span>
-
-            <div class="nav-indicator"></div>
-
-        </button>
-
-
-        <button
-            id="nav-suppliers"
-            onclick="app.switchTab('tab-suppliers')">
-
-            <i class="fa-solid fa-building"></i>
-
-            <span>Suppliers</span>
-
-            <div class="nav-indicator"></div>
-
-        </button>
-
-
-        <button
-            id="nav-reorder"
-            onclick="app.switchTab('tab-reorder')">
-
-            <i class="fa-solid fa-clipboard-list"></i>
-
-            <span>MRP</span>
-
-            <div class="nav-indicator"></div>
-
-        </button>
-
-    </nav>
-
-
-    <!-- =========================================
-         SHIPMENT MODAL
-    ========================================== -->
-
-    <div id="shipment-modal"
-         class="modal">
-
-        <div class="modal-content">
-
-            <div class="modal-header">
-
-                <div class="modal-title"
-                     id="modal-title">
-
-                    Add New Package
-
-                </div>
+            <div class="flex items-end">
 
                 <button
-                    class="close-button"
-                    onclick="app.closeModal()">
+                    onclick="refreshShipments()"
+                    class="btn btn-secondary w-full">
 
-                    <i class="fa-solid fa-xmark"></i>
+                    ↻ Refresh
 
                 </button>
 
             </div>
 
+        </div>
 
-            <form id="shipment-form"
-                  onsubmit="app.handleShipmentSubmit(event)">
-
-                <input
-                    type="hidden"
-                    id="form-package-index">
+    </section>
 
 
-                <div class="form-grid">
+    <!-- =========================
+         SHIPMENT TABLE
+    ========================= -->
 
-                    <div class="form-group">
+    <section class="card">
 
-                        <label class="form-label">
-                            Package ID
-                        </label>
+        <div class="flex items-center justify-between p-4 border-b">
 
-                        <input
-                            id="form-id"
-                            class="form-input"
-                            required
-                            placeholder="AZTAD-005">
+            <div>
 
-                    </div>
+                <h3 class="font-bold">
+                    Shipments
+                </h3>
 
+                <p class="text-xs text-slate-500 mt-1">
+                    Changes are synchronized automatically.
+                </p>
 
-                    <div class="form-group">
+            </div>
 
-                        <label class="form-label">
-                            Category
-                        </label>
+            <span
+                id="shipmentCount"
+                class="text-xs text-slate-500">
+                0 records
+            </span>
 
-                        <input
-                            id="form-category"
-                            class="form-input"
-                            required
-                            placeholder="Raw Materials">
-
-                    </div>
+        </div>
 
 
-                    <div class="form-group">
+        <div class="table-container">
 
-                        <label class="form-label">
-                            Payment
-                        </label>
+            <table>
 
-                        <select
-                            id="form-payment"
-                            class="form-select">
+                <thead>
 
-                            <option>LC</option>
-                            <option>TT</option>
-                            <option>CAD</option>
+                    <tr>
 
-                        </select>
+                        <th>
+                            Shipment
+                        </th>
 
-                    </div>
+                        <th>
+                            Supplier
+                        </th>
+
+                        <th>
+                            Origin
+                        </th>
+
+                        <th>
+                            Destination
+                        </th>
+
+                        <th>
+                            Status
+                        </th>
+
+                        <th>
+                            Lead Time
+                        </th>
+
+                        <th>
+                            ETA
+                        </th>
+
+                        <th>
+                            Actions
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="shipmentTableBody">
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<!-- =========================
+     SHIPMENT MODAL
+========================= -->
+
+<div
+    id="shipmentModal"
+    class="modal">
+
+    <div class="modal-box">
+
+        <div class="flex items-center justify-between mb-6">
+
+            <div>
+
+                <h3 id="modalTitle"
+                    class="text-xl font-bold">
+                    Add Shipment
+                </h3>
+
+                <p class="text-xs text-slate-500 mt-1">
+                    Shipment information
+                </p>
+
+            </div>
+
+            <button
+                onclick="closeShipmentModal()"
+                class="text-slate-400 hover:text-slate-700 text-xl">
+                ×
+            </button>
+
+        </div>
+
+
+        <form id="shipmentForm"
+              onsubmit="saveShipment(event)">
+
+            <input
+                type="hidden"
+                id="shipmentId">
+
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+
+                <!-- Shipment Number -->
+
+                <div>
+
+                    <label class="block text-sm font-semibold mb-1">
+                        Shipment Number
+                    </label>
+
+                    <input
+                        id="shipmentNumber"
+                        class="input"
+                        required
+                        placeholder="SHP-001">
 
                 </div>
 
 
-                <div class="form-group">
+                <!-- Supplier -->
 
-                    <label class="form-label">
+                <div>
+
+                    <label class="block text-sm font-semibold mb-1">
+                        Supplier
+                    </label>
+
+                    <input
+                        id="supplier"
+                        class="input"
+                        placeholder="Supplier name">
+
+                </div>
+
+
+                <!-- Origin -->
+
+                <div>
+
+                    <label class="block text-sm font-semibold mb-1">
+                        Origin
+                    </label>
+
+                    <input
+                        id="origin"
+                        class="input"
+                        placeholder="China">
+
+                </div>
+
+
+                <!-- Destination -->
+
+                <div>
+
+                    <label class="block text-sm font-semibold mb-1">
+                        Destination
+                    </label>
+
+                    <input
+                        id="destination"
+                        class="input"
+                        placeholder="Addis Ababa">
+
+                </div>
+
+
+                <!-- Status -->
+
+                <div>
+
+                    <label class="block text-sm font-semibold mb-1">
+                        Status
+                    </label>
+
+                    <select
+                        id="shipmentStatus"
+                        class="input">
+
+                        <option value="Pending">
+                            Pending
+                        </option>
+
+                        <option value="Processing">
+                            Processing
+                        </option>
+
+                        <option value="In Transit">
+                            In Transit
+                        </option>
+
+                        <option value="Delivered">
+                            Delivered
+                        </option>
+
+                        <option value="Delayed">
+                            Delayed
+                        </option>
+
+                        <option value="Cancelled">
+                            Cancelled
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- Lead Time -->
+
+                <div>
+
+                    <label class="block text-sm font-semibold mb-1">
+                        Lead Time
+                    </label>
+
+                    <input
+                        id="leadTime"
+                        class="input"
+                        placeholder="30 days">
+
+                </div>
+
+
+                <!-- ETA -->
+
+                <div>
+
+                    <label class="block text-sm font-semibold mb-1">
+                        ETA
+                    </label>
+
+                    <input
+                        id="eta"
+                        type="date"
+                        class="input">
+
+                </div>
+
+
+                <!-- Tracking -->
+
+                <div>
+
+                    <label class="block text-sm font-semibold mb-1">
+                        Tracking Number
+                    </label>
+
+                    <input
+                        id="trackingNumber"
+                        class="input"
+                        placeholder="Tracking number">
+
+                </div>
+
+
+                <!-- Description -->
+
+                <div class="md:col-span-2">
+
+                    <label class="block text-sm font-semibold mb-1">
                         Description
                     </label>
 
                     <textarea
-                        id="form-desc"
-                        class="form-textarea"
-                        required
-                        placeholder="Description of goods"></textarea>
+                        id="description"
+                        class="input"
+                        rows="3"
+                        placeholder="Shipment details"></textarea>
 
                 </div>
 
+            </div>
 
-                <div class="form-grid">
 
-                    <div class="form-group">
+            <!-- Buttons -->
 
-                        <label class="form-label">
-                            Supplier
-                        </label>
+            <div class="flex justify-end gap-3 mt-6">
 
-                        <input
-                            id="form-supplier"
-                            class="form-input"
-                            required>
+                <button
+                    type="button"
+                    onclick="closeShipmentModal()"
+                    class="btn btn-secondary">
 
-                    </div>
+                    Cancel
 
+                </button>
 
-                    <div class="form-group">
+                <button
+                    id="saveButton"
+                    type="submit"
+                    class="btn btn-primary">
 
-                        <label class="form-label">
-                            Origin
-                        </label>
+                    Save Shipment
 
-                        <input
-                            id="form-origin"
-                            class="form-input"
-                            required>
+                </button>
 
-                    </div>
+            </div>
 
-
-                    <div class="form-group">
-
-                        <label class="form-label">
-                            Measurement
-                        </label>
-
-                        <input
-                            id="form-measurement"
-                            class="form-input"
-                            required>
-
-                    </div>
-
-
-                    <div class="form-group">
-
-                        <label class="form-label">
-                            Quantity
-                        </label>
-
-                        <input
-                            id="form-quantity"
-                            type="number"
-                            class="form-input"
-                            required>
-
-                    </div>
-
-
-                    <div class="form-group">
-
-                        <label class="form-label">
-                            Value USD
-                        </label>
-
-                        <input
-                            id="form-value"
-                            type="number"
-                            step="0.01"
-                            class="form-input"
-                            required>
-
-                    </div>
-
-
-                    <div class="form-group">
-
-                        <label class="form-label">
-                            Status
-                        </label>
-
-                        <select
-                            id="form-status"
-                            class="form-select">
-
-                            <option>
-                                Delivered / Released
-                            </option>
-
-                            <option>
-                                In Production
-                            </option>
-
-                            <option>
-                                Pending
-                            </option>
-
-                            <option>
-                                Shipped / In Transit
-                            </option>
-
-                        </select>
-
-                    </div>
-
-                </div>
-
-
-                <div class="form-grid">
-
-                    <div class="form-group">
-
-                        <label class="form-label">
-                            Next Action
-                        </label>
-
-                        <input
-                            id="form-action"
-                            class="form-input">
-
-                    </div>
-
-
-                    <div class="form-group">
-
-                        <label class="form-label">
-                            ETA
-                        </label>
-
-                        <input
-                            id="form-eta"
-                            type="date"
-                            class="form-input">
-
-                    </div>
-
-                </div>
-
-
-                <div class="form-group">
-
-                    <label class="form-label">
-                        Remarks / Bottlenecks
-                    </label>
-
-                    <textarea
-                        id="form-remarks"
-                        class="form-textarea"></textarea>
-
-                </div>
-
-
-                <!-- STAGES -->
-
-                <div class="form-group">
-
-                    <label class="form-label">
-                        Lead Time Stages
-                    </label>
-
-                    <div class="stage-form-grid">
-
-                        <div>
-                            <label class="form-label">S1 Supplier</label>
-                            <input id="form-s1"
-                                   type="number"
-                                   class="form-input"
-                                   value="7">
-                        </div>
-
-                        <div>
-                            <label class="form-label">S2 Bank</label>
-                            <input id="form-s2"
-                                   type="number"
-                                   class="form-input"
-                                   value="14">
-                        </div>
-
-                        <div>
-                            <label class="form-label">S3 Ready Ship</label>
-                            <input id="form-s3"
-                                   type="number"
-                                   class="form-input"
-                                   value="21">
-                        </div>
-
-                        <div>
-                            <label class="form-label">S4 Djibouti</label>
-                            <input id="form-s4"
-                                   type="number"
-                                   class="form-input"
-                                   value="25">
-                        </div>
-
-                        <div>
-                            <label class="form-label">S5 Modjo</label>
-                            <input id="form-s5"
-                                   type="number"
-                                   class="form-input"
-                                   value="10">
-                        </div>
-
-                        <div>
-                            <label class="form-label">S6 Customs</label>
-                            <input id="form-s6"
-                                   type="number"
-                                   class="form-input"
-                                   value="7">
-                        </div>
-
-                        <div>
-                            <label class="form-label">S7 Warehouse</label>
-                            <input id="form-s7"
-                                   type="number"
-                                   class="form-input"
-                                   value="3">
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <div class="form-actions">
-
-                    <button
-                        type="button"
-                        class="secondary-button"
-                        onclick="app.closeModal()">
-
-                        Cancel
-
-                    </button>
-
-                    <button
-                        type="submit"
-                        class="primary-button">
-
-                        <i class="fa-solid fa-check"></i>
-
-                        Save Package
-
-                    </button>
-
-                </div>
-
-            </form>
-
-        </div>
+        </form>
 
     </div>
-
 
 </div>
 
 
+<!-- =========================
+     JAVASCRIPT
+========================= -->
+
 <script>
 
-    /* ============================================================
-       CONSTANTS
-    ============================================================ */
+/* =========================================================
+   SUPABASE CONFIGURATION
+========================================================= */
 
-    const STAGE_TARGETS = {
-        s1: 7,
-        s2: 14,
-        s3: 21,
-        s4: 25,
-        s5: 10,
-        s6: 7,
-        s7: 3
-    };
+const SUPABASE_URL = "YOUR_SUPABASE_URL";
 
-    const TOTAL_TARGET_LEAD_TIME = 87;
+const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
 
 
-    /* ============================================================
-       PROCUREMENT DATA
-    ============================================================ */
+/* =========================================================
+   CREATE SUPABASE CLIENT
+========================================================= */
 
-    const EXACT_EXCEL_PACKAGES = [
-
-        {
-            id: 'AZTAD-001',
-            desc: 'Adhesive Paper Sticker (Width 450mm, 345mm, 285mm and Length 4000m)',
-            category: 'Raw Materials / Paper',
-            payment: 'LC',
-            origin: 'China',
-            supplier: 'Jiangmen/Hylable',
-            measurement: 'ROLL',
-            quantity: 112,
-            value: 52260.57,
-            status: 'Delivered / Released',
-            action: 'Awaiting Release',
-            customs: 'Taxes & Duties Paid',
-            eta: '2026-10-10',
-            remarks: 'Taxes and duties paid; awaiting final release of goods at destination.',
-            s1: 6,
-            s2: 12,
-            s3: 20,
-            s4: 24,
-            s5: 9,
-            s6: 6,
-            s7: 2
-        },
-
-        {
-            id: 'AZTAD-002',
-            desc: 'Raw Materials for Mfg. of Printing Ink (Coloring matter)',
-            category: 'Raw Materials / Chemicals',
-            payment: 'TT',
-            origin: 'China',
-            supplier: 'Haiyan Huada Ink Co., Ltd',
-            measurement: 'KGS',
-            quantity: 6277,
-            value: 44026.98,
-            status: 'In Production',
-            action: 'Awaiting Production',
-            customs: 'Pending Shipment Doc Prep',
-            eta: '2026-10-20',
-            remarks: 'TT opened; production pending resumption after Chinese holiday. Expected shipment Oct 15–20.',
-            s1: 8,
-            s2: 16,
-            s3: 24,
-            s4: 26,
-            s5: 11,
-            s6: 8,
-            s7: 4
-        },
-
-        {
-            id: 'AZTAD-003',
-            desc: 'Solvent Laser Version Digital Plate',
-            category: 'Equipment / Tooling',
-            payment: 'TT',
-            origin: 'China',
-            supplier: 'Kemao International Co., Ltd',
-            measurement: 'BOX',
-            quantity: 5,
-            value: 13000,
-            status: 'Pending',
-            action: 'Forex Pending',
-            customs: 'Routing via Djibouti Port',
-            eta: '2026-11-05',
-            remarks: 'Shipment arrangement underway; forex pending due to Djibouti port to Modjo port reshipment routing.',
-            s1: 7,
-            s2: 15,
-            s3: 21,
-            s4: 25,
-            s5: 10,
-            s6: 7,
-            s7: 3
-        },
-
-        {
-            id: 'AZTAD-004',
-            desc: 'Printing Inks, Overprint Coatings, and Press Maintenance & Tooling',
-            category: 'Consumables & Tooling',
-            payment: 'TT',
-            origin: 'Kenya',
-            supplier: 'Digi Print Enterprises Ltd',
-            measurement: 'KG, CAN & BOX',
-            quantity: 1710,
-            value: 40345,
-            status: 'Shipped / In Transit',
-            action: 'Forex Approved',
-            customs: 'Supplier Shipment Pending',
-            eta: '2026-10-25',
-            remarks: 'Forex approved; awaiting supplier shipment dispatch and final shipping documents.',
-            s1: 6,
-            s2: 14,
-            s3: 20,
-            s4: 24,
-            s5: 11,
-            s6: 7,
-            s7: 3
-        }
-
-    ];
+const db = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+);
 
 
-    /* ============================================================
-       SUPPLIERS
-    ============================================================ */
+/* =========================================================
+   APPLICATION STATE
+========================================================= */
 
-    const SAMPLE_SUPPLIERS = [
+let shipments = [];
 
-        {
-            name: 'Jiangmen/Hylable',
-            origin: 'China',
-            category: 'Raw Materials / Paper',
-            activeOrders: 1,
-            totalSpend: 52260.57,
-            rating: 4.8,
-            email: 'sales@jiangmen.cn'
-        },
+let realtimeChannel = null;
 
-        {
-            name: 'Haiyan Huada Ink Co., Ltd',
-            origin: 'China',
-            category: 'Raw Materials / Chemicals',
-            activeOrders: 1,
-            totalSpend: 44026.98,
-            rating: 4.5,
-            email: 'export@huadaink.com'
-        },
-
-        {
-            name: 'Kemao International Co., Ltd',
-            origin: 'China',
-            category: 'Equipment / Tooling',
-            activeOrders: 1,
-            totalSpend: 13000,
-            rating: 4.2,
-            email: 'contact@kemao.cn'
-        },
-
-        {
-            name: 'Digi Print Enterprises Ltd',
-            origin: 'Kenya',
-            category: 'Consumables & Tooling',
-            activeOrders: 1,
-            totalSpend: 40345,
-            rating: 4.7,
-            email: 'info@digiprint.co.ke'
-        }
-
-    ];
+let isSaving = false;
 
 
-    /* ============================================================
-       REORDER ITEMS
-    ============================================================ */
+/* =========================================================
+   PAGE LOAD
+========================================================= */
 
-    const SAMPLE_REORDER_ITEMS = [
+document.addEventListener(
+    "DOMContentLoaded",
+    async () => {
 
-        {
-            code: 'SUB-PET-01',
-            name: 'Adhesive Paper Rolls (450mm)',
-            category: 'Substrates',
-            stock: 15,
-            safety: 50,
-            reqQty: 100,
-            leadTime: '35d',
-            urgency: 'CRITICAL'
-        },
+        setConnectionStatus(
+            "connecting",
+            "Connecting..."
+        );
 
-        {
-            code: 'INK-CYN-04',
-            name: 'Printing Ink Coloring Matter',
-            category: 'Chemicals',
-            stock: 1200,
-            safety: 3000,
-            reqQty: 5000,
-            leadTime: '20d',
-            urgency: 'HIGH'
-        },
+        await loadShipments();
 
-        {
-            code: 'TOOL-PLT-02',
-            name: 'Solvent Laser Digital Plate',
-            category: 'Tooling',
-            stock: 1,
-            safety: 3,
-            reqQty: 5,
-            leadTime: '25d',
-            urgency: 'MEDIUM'
-        }
+        setupRealtimeShipments();
 
-    ];
+    }
+);
 
 
-    /* ============================================================
-       APPLICATION
-    ============================================================ */
+/* =========================================================
+   LOAD SHIPMENTS FROM SUPABASE
+========================================================= */
 
-    class ApplicationCore {
+async function loadShipments() {
 
-        constructor() {
+    try {
 
-            this.packages =
-                JSON.parse(localStorage.getItem('aztad_mobile_packages'))
-                || JSON.parse(JSON.stringify(EXACT_EXCEL_PACKAGES));
-
-            this.suppliers =
-                JSON.parse(localStorage.getItem('aztad_mobile_suppliers'))
-                || JSON.parse(JSON.stringify(SAMPLE_SUPPLIERS));
-
-            this.reorderItems =
-                JSON.parse(localStorage.getItem('aztad_mobile_reorder'))
-                || JSON.parse(JSON.stringify(SAMPLE_REORDER_ITEMS));
-
-            this.chart = null;
-
-            this.init();
-
-        }
-
-
-        /* ========================================================
-           INIT
-        ======================================================== */
-
-        init() {
-
-            this.renderShipments();
-            this.renderSuppliers();
-            this.renderReorder();
-            this.initChart();
-            this.updateKPIs();
-
-        }
-
-
-        /* ========================================================
-           SAVE
-        ======================================================== */
-
-        saveData() {
-
-            localStorage.setItem(
-                'aztad_mobile_packages',
-                JSON.stringify(this.packages)
-            );
-
-            localStorage.setItem(
-                'aztad_mobile_suppliers',
-                JSON.stringify(this.suppliers)
-            );
-
-            localStorage.setItem(
-                'aztad_mobile_reorder',
-                JSON.stringify(this.reorderItems)
-            );
-
-            this.renderShipments();
-            this.renderSuppliers();
-            this.renderReorder();
-            this.updateKPIs();
-            this.updateChart();
-
-        }
-
-
-        /* ========================================================
-           TAB SWITCH
-        ======================================================== */
-
-        switchTab(tabId) {
-
-            document.querySelectorAll('.tab-content')
-                .forEach(section => {
-                    section.style.display = 'none';
-                });
-
-            document.getElementById(tabId).style.display = 'block';
-
-
-            document.querySelectorAll('.bottom-nav button')
-                .forEach(button => {
-                    button.classList.remove('active');
-                });
-
-
-            const navId =
-                tabId.replace('tab-', '');
-
-            const nav =
-                document.getElementById(`nav-${navId}`);
-
-            if (nav) {
-                nav.classList.add('active');
-            }
-
-
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
+        const {
+            data,
+            error
+        } = await db
+            .from("shipments")
+            .select("*")
+            .order("created_at", {
+                ascending: false
             });
 
 
-            if (tabId === 'tab-dashboard') {
-                setTimeout(() => {
-                    this.updateChart();
-                }, 100);
-            }
+        if (error) {
 
-        }
-
-
-        /* ========================================================
-           TOTAL LEAD TIME
-        ======================================================== */
-
-        calculatePackageTotal(packageData) {
-
-            return [
-                's1',
-                's2',
-                's3',
-                's4',
-                's5',
-                's6',
-                's7'
-            ].reduce(
-                (sum,key) =>
-                    sum + Number(packageData[key] || 0),
-                0
+            console.error(
+                "Supabase load error:",
+                error
             );
 
-        }
+            showError(
+                "Could not load shipments from Supabase."
+            );
 
+            setConnectionStatus(
+                "offline",
+                "Database Error"
+            );
 
-        /* ========================================================
-           STATUS
-        ======================================================== */
-
-        getStatusClass(status) {
-
-            switch(status) {
-
-                case 'Delivered / Released':
-                    return 'badge-delivered';
-
-                case 'In Production':
-                    return 'badge-production';
-
-                case 'Pending':
-                    return 'badge-pending';
-
-                case 'Shipped / In Transit':
-                    return 'badge-shipped';
-
-                default:
-                    return '';
-
-            }
+            return;
 
         }
 
 
-        /* ========================================================
-           RENDER SHIPMENTS
-        ======================================================== */
-
-        renderShipments() {
-
-            const container =
-                document.getElementById('shipment-list');
-
-            const search =
-                (
-                    document.getElementById('shipment-search')
-                    ?.value || ''
-                ).toLowerCase();
-
-            const category =
-                document.getElementById(
-                    'shipment-category-filter'
-                )?.value || 'ALL';
-
-            const status =
-                document.getElementById(
-                    'shipment-status-filter'
-                )?.value || 'ALL';
+        shipments = data || [];
 
 
-            const filtered =
-                this.packages.filter(p => {
+        renderShipments();
 
-                    const matchesSearch =
-                        p.id.toLowerCase().includes(search)
-                        ||
-                        p.supplier.toLowerCase().includes(search)
-                        ||
-                        p.desc.toLowerCase().includes(search);
+        updateDashboard();
 
-                    const matchesCategory =
-                        category === 'ALL'
-                        ||
-                        p.category === category;
 
-                    const matchesStatus =
-                        status === 'ALL'
-                        ||
-                        p.status === status;
+        console.log(
+            "Shipments loaded:",
+            shipments
+        );
 
-                    return (
-                        matchesSearch
-                        &&
-                        matchesCategory
-                        &&
-                        matchesStatus
+
+    } catch (error) {
+
+        console.error(error);
+
+        showError(
+            "Unexpected error loading shipments."
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   REALTIME SUPABASE LISTENER
+========================================================= */
+
+function setupRealtimeShipments() {
+
+    if (realtimeChannel) {
+
+        db.removeChannel(
+            realtimeChannel
+        );
+
+    }
+
+
+    realtimeChannel = db
+        .channel("public:shipments")
+
+        .on(
+
+            "postgres_changes",
+
+            {
+                event: "*",
+                schema: "public",
+                table: "shipments"
+            },
+
+            handleRealtimeChange
+
+        )
+
+        .subscribe(
+
+            (status) => {
+
+                console.log(
+                    "Realtime status:",
+                    status
+                );
+
+
+                if (status === "SUBSCRIBED") {
+
+                    setConnectionStatus(
+                        "online",
+                        "Live"
                     );
 
-                });
+                }
 
+                else if (
+                    status === "CHANNEL_ERROR" ||
+                    status === "TIMED_OUT"
+                ) {
 
-            if (!filtered.length) {
-
-                container.innerHTML = `
-
-                    <div class="empty-state">
-
-                        <i class="fa-solid fa-box-open"></i>
-
-                        <p>
-                            No shipment packages found.
-                        </p>
-
-                    </div>
-
-                `;
-
-                return;
-
-            }
-
-
-            container.innerHTML = '';
-
-
-            filtered.forEach((p) => {
-
-                const originalIndex =
-                    this.packages.indexOf(p);
-
-                const total =
-                    this.calculatePackageTotal(p);
-
-                const variance =
-                    total - TOTAL_TARGET_LEAD_TIME;
-
-
-                let performance;
-
-                if (variance > 0) {
-
-                    performance = `
-                        <span
-                            style="
-                                color:#dc2626;
-                                font-weight:800;
-                            ">
-                            +${variance}d Behind
-                        </span>
-                    `;
-
-                } else if (variance < 0) {
-
-                    performance = `
-                        <span
-                            style="
-                                color:#059669;
-                                font-weight:800;
-                            ">
-                            ${Math.abs(variance)}d Ahead
-                        </span>
-                    `;
-
-                } else {
-
-                    performance = `
-                        <span
-                            style="
-                                color:#2563eb;
-                                font-weight:800;
-                            ">
-                            On Time
-                        </span>
-                    `;
+                    setConnectionStatus(
+                        "offline",
+                        "Realtime Error"
+                    );
 
                 }
 
+                else {
 
-                const card =
-                    document.createElement('div');
+                    setConnectionStatus(
+                        "connecting",
+                        status
+                    );
 
-                card.className =
-                    'shipment-card';
-
-
-                card.innerHTML = `
-
-                    <div class="shipment-card-header">
-
-                        <div>
-
-                            <div class="shipment-id">
-                                ${p.id}
-                            </div>
-
-                            <div class="shipment-supplier">
-                                <i class="fa-solid fa-building"></i>
-                                ${p.supplier}
-                            </div>
-
-                        </div>
-
-                        <span class="status-badge ${this.getStatusClass(p.status)}">
-                            ${p.status}
-                        </span>
-
-                    </div>
-
-
-                    <div class="shipment-body">
-
-                        <div class="shipment-description">
-                            ${p.desc}
-                        </div>
-
-
-                        <div class="shipment-grid">
-
-                            <div class="shipment-field">
-
-                                <div class="field-label">
-                                    Category
-                                </div>
-
-                                <div class="field-value">
-                                    ${p.category}
-                                </div>
-
-                            </div>
-
-
-                            <div class="shipment-field">
-
-                                <div class="field-label">
-                                    Origin
-                                </div>
-
-                                <div class="field-value">
-                                    ${p.origin}
-                                </div>
-
-                            </div>
-
-
-                            <div class="shipment-field">
-
-                                <div class="field-label">
-                                    Quantity
-                                </div>
-
-                                <div class="field-value">
-                                    ${Number(p.quantity).toLocaleString()}
-                                    ${p.measurement}
-                                </div>
-
-                            </div>
-
-
-                            <div class="shipment-field">
-
-                                <div class="field-label">
-                                    Value
-                                </div>
-
-                                <div class="field-value money">
-                                    $${Number(p.value).toLocaleString(
-                                        'en-US',
-                                        {
-                                            minimumFractionDigits:2
-                                        }
-                                    )}
-                                </div>
-
-                            </div>
-
-
-                            <div class="shipment-field">
-
-                                <div class="field-label">
-                                    Payment
-                                </div>
-
-                                <div class="field-value">
-                                    ${p.payment}
-                                </div>
-
-                            </div>
-
-
-                            <div class="shipment-field">
-
-                                <div class="field-label">
-                                    ETA
-                                </div>
-
-                                <div class="field-value">
-                                    ${p.eta || '-'}
-                                </div>
-
-                            </div>
-
-
-                            <div class="shipment-field">
-
-                                <div class="field-label">
-                                    Next Action
-                                </div>
-
-                                <div class="field-value">
-                                    ${p.action || '-'}
-                                </div>
-
-                            </div>
-
-
-                            <div class="shipment-field">
-
-                                <div class="field-label">
-                                    Performance
-                                </div>
-
-                                <div class="field-value">
-                                    ${performance}
-                                </div>
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="lead-time-box">
-
-                            <div class="lead-time-header">
-
-                                <div class="lead-time-title">
-                                    Lead Time
-                                </div>
-
-                                <div class="lead-time-total">
-                                    ${total} Days
-                                </div>
-
-                            </div>
-
-
-                            <div class="stage-row">
-
-                                <div class="stage">
-                                    <div class="stage-label">S1</div>
-                                    <div class="stage-value">${p.s1}d</div>
-                                </div>
-
-                                <div class="stage">
-                                    <div class="stage-label">S2</div>
-                                    <div class="stage-value">${p.s2}d</div>
-                                </div>
-
-                                <div class="stage">
-                                    <div class="stage-label">S3</div>
-                                    <div class="stage-value">${p.s3}d</div>
-                                </div>
-
-                                <div class="stage">
-                                    <div class="stage-label">S4</div>
-                                    <div class="stage-value">${p.s4}d</div>
-                                </div>
-
-                                <div class="stage">
-                                    <div class="stage-label">S5</div>
-                                    <div class="stage-value">${p.s5}d</div>
-                                </div>
-
-                                <div class="stage">
-                                    <div class="stage-label">S6</div>
-                                    <div class="stage-value">${p.s6}d</div>
-                                </div>
-
-                                <div class="stage">
-                                    <div class="stage-label">S7</div>
-                                    <div class="stage-value">${p.s7}d</div>
-                                </div>
-
-                            </div>
-
-                        </div>
-
-
-                        <div style="
-                            margin-top:11px;
-                            padding:10px;
-                            border-radius:10px;
-                            background:#f8fafc;
-                            font-size:10px;
-                            color:#64748b;
-                        ">
-
-                            <strong>Remarks:</strong>
-                            ${p.remarks || 'No remarks'}
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="shipment-actions">
-
-                        <button
-                            class="icon-button edit"
-                            onclick="app.editShipment(${originalIndex})">
-
-                            <i class="fa-solid fa-pen"></i>
-
-                        </button>
-
-
-                        <button
-                            class="icon-button delete"
-                            onclick="app.deleteShipment(${originalIndex})">
-
-                            <i class="fa-solid fa-trash"></i>
-
-                        </button>
-
-                    </div>
-
-                `;
-
-
-                container.appendChild(card);
-
-            });
-
-
-            this.updateShipmentSummary(filtered);
-
-        }
-
-
-        /* ========================================================
-           SHIPMENT SUMMARY
-        ======================================================== */
-
-        updateShipmentSummary(packages) {
-
-            const count =
-                packages.length || 1;
-
-            const totalValue =
-                packages.reduce(
-                    (sum,p) =>
-                        sum + Number(p.value || 0),
-                    0
-                );
-
-
-            const average =
-                packages.reduce(
-                    (sum,p) =>
-                        sum + this.calculatePackageTotal(p),
-                    0
-                ) / count;
-
-
-            const variance =
-                average - TOTAL_TARGET_LEAD_TIME;
-
-
-            document.getElementById(
-                'kpi-shipment-pkgs'
-            ).innerText = packages.length;
-
-
-            document.getElementById(
-                'kpi-shipment-value'
-            ).innerText =
-                '$' +
-                totalValue.toLocaleString(
-                    'en-US',
-                    {
-                        maximumFractionDigits:0
-                    }
-                );
-
-
-            document.getElementById(
-                'kpi-shipment-suppliers'
-            ).innerText =
-                new Set(
-                    packages.map(p => p.supplier)
-                ).size;
-
-
-            document.getElementById(
-                'mobile-total-lt'
-            ).innerText =
-                average.toFixed(1) + ' Days';
-
-
-            document.getElementById(
-                'mobile-variance'
-            ).innerText =
-                (variance > 0 ? '+' : '') +
-                variance.toFixed(1) +
-                ' Days';
-
-
-            const performance =
-                document.getElementById(
-                    'mobile-performance'
-                );
-
-
-            if (variance < 0) {
-
-                performance.innerText =
-                    'AHEAD';
-
-                performance.style.color =
-                    '#059669';
-
-            } else if (variance > 0) {
-
-                performance.innerText =
-                    'BEHIND';
-
-                performance.style.color =
-                    '#dc2626';
-
-            } else {
-
-                performance.innerText =
-                    'ON TIME';
-
-                performance.style.color =
-                    '#2563eb';
-
-            }
-
-        }
-
-
-        /* ========================================================
-           SUPPLIERS
-        ======================================================== */
-
-        renderSuppliers() {
-
-            const container =
-                document.getElementById(
-                    'supplier-list'
-                );
-
-            container.innerHTML = '';
-
-
-            this.suppliers.forEach(s => {
-
-                const initials =
-                    s.name
-                    .split(' ')
-                    .map(x => x[0])
-                    .join('')
-                    .substring(0,2)
-                    .toUpperCase();
-
-
-                const card =
-                    document.createElement('div');
-
-                card.className =
-                    'supplier-card';
-
-
-                card.innerHTML = `
-
-                    <div class="supplier-top">
-
-                        <div class="supplier-avatar">
-                            ${initials}
-                        </div>
-
-                        <div>
-
-                            <div class="supplier-name">
-                                ${s.name}
-                            </div>
-
-                            <div class="supplier-origin">
-                                <i class="fa-solid fa-location-dot"></i>
-                                ${s.origin}
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="supplier-info">
-
-                        <div class="shipment-field">
-
-                            <div class="field-label">
-                                Category
-                            </div>
-
-                            <div class="field-value">
-                                ${s.category}
-                            </div>
-
-                        </div>
-
-
-                        <div class="shipment-field">
-
-                            <div class="field-label">
-                                Active Orders
-                            </div>
-
-                            <div class="field-value">
-                                ${s.activeOrders}
-                            </div>
-
-                        </div>
-
-
-                        <div class="shipment-field">
-
-                            <div class="field-label">
-                                Total Spend
-                            </div>
-
-                            <div class="field-value money">
-                                $${Number(s.totalSpend).toLocaleString()}
-                            </div>
-
-                        </div>
-
-
-                        <div class="shipment-field">
-
-                            <div class="field-label">
-                                Rating
-                            </div>
-
-                            <div class="field-value"
-                                 style="color:#d97706">
-
-                                <i class="fa-solid fa-star"></i>
-                                ${s.rating}
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="shipment-field"
-                             style="grid-column:1/-1">
-
-                            <div class="field-label">
-                                Contact
-                            </div>
-
-                            <div class="field-value"
-                                 style="color:#2563eb">
-
-                                ${s.email}
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                `;
-
-
-                container.appendChild(card);
-
-            });
-
-        }
-
-
-        /* ========================================================
-           REORDER
-        ======================================================== */
-
-        renderReorder() {
-
-            const container =
-                document.getElementById(
-                    'reorder-list'
-                );
-
-            container.innerHTML = '';
-
-
-            this.reorderItems.forEach(r => {
-
-                let urgencyClass =
-                    'urgency-medium';
-
-                if (r.urgency === 'CRITICAL') {
-                    urgencyClass =
-                        'urgency-critical';
                 }
 
-                if (r.urgency === 'HIGH') {
-                    urgencyClass =
-                        'urgency-high';
-                }
-
-
-                const card =
-                    document.createElement('div');
-
-                card.className =
-                    'reorder-card';
-
-
-                card.innerHTML = `
-
-                    <div class="reorder-top">
-
-                        <div>
-
-                            <div class="reorder-code">
-                                ${r.code}
-                            </div>
-
-                            <div class="reorder-name">
-                                ${r.name}
-                            </div>
-
-                        </div>
-
-
-                        <span class="urgency ${urgencyClass}">
-                            ${r.urgency}
-                        </span>
-
-                    </div>
-
-
-                    <div style="
-                        margin-top:5px;
-                        font-size:9px;
-                        color:#94a3b8;
-                    ">
-
-                        ${r.category}
-
-                    </div>
-
-
-                    <div class="reorder-stats">
-
-                        <div class="reorder-stat">
-
-                            <div class="reorder-stat-label">
-                                Stock
-                            </div>
-
-                            <div
-                                class="reorder-stat-value"
-                                style="
-                                    color:${r.stock < r.safety
-                                        ? '#dc2626'
-                                        : '#334155'};
-                                ">
-
-                                ${r.stock.toLocaleString()}
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="reorder-stat">
-
-                            <div class="reorder-stat-label">
-                                Safety
-                            </div>
-
-                            <div class="reorder-stat-value">
-                                ${r.safety.toLocaleString()}
-                            </div>
-
-                        </div>
-
-
-                        <div class="reorder-stat">
-
-                            <div class="reorder-stat-label">
-                                Required
-                            </div>
-
-                            <div
-                                class="reorder-stat-value"
-                                style="color:#059669">
-
-                                ${r.reqQty.toLocaleString()}
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    <div style="
-                        display:flex;
-                        justify-content:space-between;
-                        margin-top:10px;
-                        padding-top:10px;
-                        border-top:1px solid #eef2f7;
-                        font-size:9px;
-                        color:#64748b;
-                    ">
-
-                        <span>
-                            Lead Time
-                            <strong style="color:#334155">
-                                ${r.leadTime}
-                            </strong>
-                        </span>
-
-                        <span>
-                            Reorder Required
-                        </span>
-
-                    </div>
-
-                `;
-
-
-                container.appendChild(card);
-
-            });
-
-        }
-
-
-        /* ========================================================
-           KPIs
-        ======================================================== */
-
-        updateKPIs() {
-
-            const totalPackages =
-                this.packages.length;
-
-            const totalValue =
-                this.packages.reduce(
-                    (sum,p) =>
-                        sum + Number(p.value || 0),
-                    0
-                );
-
-
-            const average =
-                totalPackages
-                ?
-                this.packages.reduce(
-                    (sum,p) =>
-                        sum + this.calculatePackageTotal(p),
-                    0
-                ) / totalPackages
-                :
-                0;
-
-
-            const variance =
-                average - TOTAL_TARGET_LEAD_TIME;
-
-
-            document.getElementById(
-                'dash-kpi-total-pkg'
-            ).innerText =
-                totalPackages;
-
-
-            document.getElementById(
-                'dash-kpi-total-val'
-            ).innerText =
-                '$' +
-                totalValue.toLocaleString(
-                    'en-US',
-                    {
-                        maximumFractionDigits:0
-                    }
-                );
-
-
-            document.getElementById(
-                'dash-kpi-avg-lt'
-            ).innerText =
-                average.toFixed(1) + 'd';
-
-
-            const status =
-                document.getElementById(
-                    'dash-kpi-schedule-status'
-                );
-
-
-            if (variance < 0) {
-
-                status.innerText =
-                    Math.abs(variance).toFixed(1)
-                    +
-                    'd ahead of target';
-
-                status.style.color =
-                    '#059669';
-
-            } else if (variance > 0) {
-
-                status.innerText =
-                    variance.toFixed(1)
-                    +
-                    'd behind target';
-
-                status.style.color =
-                    '#dc2626';
-
-            } else {
-
-                status.innerText =
-                    'On schedule';
-
-                status.style.color =
-                    '#2563eb';
-
             }
 
+        );
 
-            document.getElementById(
-                'summary-average'
-            ).innerText =
-                average.toFixed(1) + ' Days';
+}
 
 
-            document.getElementById(
-                'summary-suppliers'
-            ).innerText =
-                new Set(
-                    this.packages.map(p => p.supplier)
-                ).size;
+/* =========================================================
+   HANDLE REALTIME CHANGES
+========================================================= */
 
+function handleRealtimeChange(payload) {
 
-            document.getElementById(
-                'summary-packages'
-            ).innerText =
-                totalPackages;
+    console.log(
+        "Realtime shipment change:",
+        payload
+    );
 
-        }
 
+    /* INSERT */
 
-        /* ========================================================
-           CHART
-        ======================================================== */
+    if (
+        payload.eventType === "INSERT"
+    ) {
 
-        getAverages() {
+        const newShipment =
+            payload.new;
 
-            const count =
-                this.packages.length || 1;
 
-
-            return [
-
-                this.packages.reduce(
-                    (s,p) => s + Number(p.s1 || 0),
-                    0
-                ) / count,
-
-                this.packages.reduce(
-                    (s,p) => s + Number(p.s2 || 0),
-                    0
-                ) / count,
-
-                this.packages.reduce(
-                    (s,p) => s + Number(p.s3 || 0),
-                    0
-                ) / count,
-
-                this.packages.reduce(
-                    (s,p) => s + Number(p.s4 || 0),
-                    0
-                ) / count,
-
-                this.packages.reduce(
-                    (s,p) => s + Number(p.s5 || 0),
-                    0
-                ) / count,
-
-                this.packages.reduce(
-                    (s,p) => s + Number(p.s6 || 0),
-                    0
-                ) / count,
-
-                this.packages.reduce(
-                    (s,p) => s + Number(p.s7 || 0),
-                    0
-                ) / count
-
-            ];
-
-        }
-
-
-        initChart() {
-
-            const canvas =
-                document.getElementById(
-                    'stageChart'
-                );
-
-
-            if (!canvas) return;
-
-
-            const ctx =
-                canvas.getContext('2d');
-
-
-            this.chart =
-                new Chart(
-                    ctx,
-                    {
-
-                        type: 'bar',
-
-                        data: {
-
-                            labels: [
-                                'Supplier',
-                                'Bank',
-                                'Ready',
-                                'Djibouti',
-                                'Modjo',
-                                'Customs',
-                                'Warehouse'
-                            ],
-
-                            datasets: [
-
-                                {
-                                    label: 'Target',
-                                    data: [
-                                        7,
-                                        14,
-                                        21,
-                                        25,
-                                        10,
-                                        7,
-                                        3
-                                    ],
-                                    backgroundColor:
-                                        'rgba(37,99,235,.18)',
-                                    borderColor:
-                                        '#2563eb',
-                                    borderWidth: 1,
-                                    borderRadius: 5
-                                },
-
-                                {
-                                    label: 'Actual',
-                                    data:
-                                        this.getAverages(),
-                                    backgroundColor:
-                                        'rgba(245,158,11,.75)',
-                                    borderColor:
-                                        '#f59e0b',
-                                    borderWidth: 1,
-                                    borderRadius: 5
-                                }
-
-                            ]
-
-                        },
-
-                        options: {
-
-                            responsive: true,
-
-                            maintainAspectRatio: false,
-
-                            scales: {
-
-                                y: {
-
-                                    beginAtZero: true,
-
-                                    grid: {
-                                        color:
-                                            '#eef2f7'
-                                    },
-
-                                    ticks: {
-                                        color:
-                                            '#64748b',
-                                        font: {
-                                            size: 9
-                                        }
-                                    }
-
-                                },
-
-                                x: {
-
-                                    grid: {
-                                        display:false
-                                    },
-
-                                    ticks: {
-                                        color:
-                                            '#64748b',
-                                        font: {
-                                            size: 8
-                                        }
-                                    }
-
-                                }
-
-                            },
-
-                            plugins: {
-
-                                legend: {
-
-                                    position:'bottom',
-
-                                    labels: {
-
-                                        color:'#475569',
-
-                                        font:{
-                                            size:9
-                                        },
-
-                                        boxWidth:12
-
-                                    }
-
-                                }
-
-                            }
-
-                        }
-
-                    }
-                );
-
-        }
-
-
-        updateChart() {
-
-            if (!this.chart) return;
-
-            this.chart.data.datasets[1].data =
-                this.getAverages();
-
-            this.chart.update();
-
-        }
-
-
-        /* ========================================================
-           OPEN MODAL
-        ======================================================== */
-
-        openShipmentModal(index = null) {
-
-            const modal =
-                document.getElementById(
-                    'shipment-modal'
-                );
-
-            const form =
-                document.getElementById(
-                    'shipment-form'
-                );
-
-
-            if (index !== null) {
-
-                const p =
-                    this.packages[index];
-
-
-                document.getElementById(
-                    'modal-title'
-                ).innerText =
-                    'Edit ' + p.id;
-
-
-                document.getElementById(
-                    'form-package-index'
-                ).value =
-                    index;
-
-
-                document.getElementById(
-                    'form-id'
-                ).value = p.id;
-
-
-                document.getElementById(
-                    'form-category'
-                ).value = p.category;
-
-
-                document.getElementById(
-                    'form-payment'
-                ).value = p.payment;
-
-
-                document.getElementById(
-                    'form-desc'
-                ).value = p.desc;
-
-
-                document.getElementById(
-                    'form-supplier'
-                ).value = p.supplier;
-
-
-                document.getElementById(
-                    'form-origin'
-                ).value = p.origin;
-
-
-                document.getElementById(
-                    'form-measurement'
-                ).value = p.measurement;
-
-
-                document.getElementById(
-                    'form-quantity'
-                ).value = p.quantity;
-
-
-                document.getElementById(
-                    'form-value'
-                ).value = p.value;
-
-
-                document.getElementById(
-                    'form-status'
-                ).value = p.status;
-
-
-                document.getElementById(
-                    'form-action'
-                ).value = p.action;
-
-
-                document.getElementById(
-                    'form-eta'
-                ).value = p.eta;
-
-
-                document.getElementById(
-                    'form-remarks'
-                ).value = p.remarks;
-
-
-                document.getElementById(
-                    'form-s1'
-                ).value = p.s1;
-
-
-                document.getElementById(
-                    'form-s2'
-                ).value = p.s2;
-
-
-                document.getElementById(
-                    'form-s3'
-                ).value = p.s3;
-
-
-                document.getElementById(
-                    'form-s4'
-                ).value = p.s4;
-
-
-                document.getElementById(
-                    'form-s5'
-                ).value = p.s5;
-
-
-                document.getElementById(
-                    'form-s6'
-                ).value = p.s6;
-
-
-                document.getElementById(
-                    'form-s7'
-                ).value = p.s7;
-
-            } else {
-
-                document.getElementById(
-                    'modal-title'
-                ).innerText =
-                    'Add New Package';
-
-
-                document.getElementById(
-                    'form-package-index'
-                ).value = '';
-
-
-                form.reset();
-
-
-                document.getElementById(
-                    'form-s1'
-                ).value = 7;
-
-                document.getElementById(
-                    'form-s2'
-                ).value = 14;
-
-                document.getElementById(
-                    'form-s3'
-                ).value = 21;
-
-                document.getElementById(
-                    'form-s4'
-                ).value = 25;
-
-                document.getElementById(
-                    'form-s5'
-                ).value = 10;
-
-                document.getElementById(
-                    'form-s6'
-                ).value = 7;
-
-                document.getElementById(
-                    'form-s7'
-                ).value = 3;
-
-            }
-
-
-            modal.classList.add('open');
-
-            document.body.style.overflow =
-                'hidden';
-
-        }
-
-
-        /* ========================================================
-           CLOSE MODAL
-        ======================================================== */
-
-        closeModal() {
-
-            document
-                .getElementById('shipment-modal')
-                .classList.remove('open');
-
-            document.body.style.overflow =
-                '';
-
-        }
-
-
-        /* ========================================================
-           SAVE PACKAGE
-        ======================================================== */
-
-        handleShipmentSubmit(event) {
-
-            event.preventDefault();
-
-
-            const index =
-                document.getElementById(
-                    'form-package-index'
-                ).value;
-
-
-            const packageData = {
-
-                id:
-                    document.getElementById(
-                        'form-id'
-                    ).value,
-
-                category:
-                    document.getElementById(
-                        'form-category'
-                    ).value,
-
-                payment:
-                    document.getElementById(
-                        'form-payment'
-                    ).value,
-
-                desc:
-                    document.getElementById(
-                        'form-desc'
-                    ).value,
-
-                supplier:
-                    document.getElementById(
-                        'form-supplier'
-                    ).value,
-
-                origin:
-                    document.getElementById(
-                        'form-origin'
-                    ).value,
-
-                measurement:
-                    document.getElementById(
-                        'form-measurement'
-                    ).value,
-
-                quantity:
-                    Number(
-                        document.getElementById(
-                            'form-quantity'
-                        ).value
-                    ),
-
-                value:
-                    Number(
-                        document.getElementById(
-                            'form-value'
-                        ).value
-                    ),
-
-                status:
-                    document.getElementById(
-                        'form-status'
-                    ).value,
-
-                action:
-                    document.getElementById(
-                        'form-action'
-                    ).value,
-
-                customs:
-                    'Standard Process',
-
-                eta:
-                    document.getElementById(
-                        'form-eta'
-                    ).value,
-
-                remarks:
-                    document.getElementById(
-                        'form-remarks'
-                    ).value,
-
-                s1:
-                    Number(
-                        document.getElementById(
-                            'form-s1'
-                        ).value
-                    ),
-
-                s2:
-                    Number(
-                        document.getElementById(
-                            'form-s2'
-                        ).value
-                    ),
-
-                s3:
-                    Number(
-                        document.getElementById(
-                            'form-s3'
-                        ).value
-                    ),
-
-                s4:
-                    Number(
-                        document.getElementById(
-                            'form-s4'
-                        ).value
-                    ),
-
-                s5:
-                    Number(
-                        document.getElementById(
-                            'form-s5'
-                        ).value
-                    ),
-
-                s6:
-                    Number(
-                        document.getElementById(
-                            'form-s6'
-                        ).value
-                    ),
-
-                s7:
-                    Number(
-                        document.getElementById(
-                            'form-s7'
-                        ).value
-                    )
-
-            };
-
-
-            if (index !== '') {
-
-                this.packages[index] =
-                    packageData;
-
-            } else {
-
-                this.packages.push(
-                    packageData
-                );
-
-            }
-
-
-            this.saveData();
-
-            this.closeModal();
-
-        }
-
-
-        /* ========================================================
-           EDIT
-        ======================================================== */
-
-        editShipment(index) {
-
-            this.openShipmentModal(index);
-
-        }
-
-
-        /* ========================================================
-           DELETE
-        ======================================================== */
-
-        deleteShipment(index) {
-
-            if (
-                confirm(
-                    'Delete this procurement package?'
-                )
-            ) {
-
-                this.packages.splice(
-                    index,
-                    1
-                );
-
-                this.saveData();
-
-            }
-
-        }
-
-
-        /* ========================================================
-           EXPORT
-        ======================================================== */
-
-        exportToCSV() {
-
-            let csv =
-                'Package ID,Description,Category,Payment,Origin,Supplier,Measurement,Quantity,Value (USD),Status,Action,ETA,Remarks,S1,S2,S3,S4,S5,S6,S7,Total Lead Time,Variance\n';
-
-
-            this.packages.forEach(p => {
-
-                const total =
-                    this.calculatePackageTotal(p);
-
-                const variance =
-                    total -
-                    TOTAL_TARGET_LEAD_TIME;
-
-
-                csv +=
-                    `"${p.id}",` +
-                    `"${p.desc}",` +
-                    `"${p.category}",` +
-                    `"${p.payment}",` +
-                    `"${p.origin}",` +
-                    `"${p.supplier}",` +
-                    `"${p.measurement}",` +
-                    `${p.quantity},` +
-                    `${p.value},` +
-                    `"${p.status}",` +
-                    `"${p.action}",` +
-                    `"${p.eta}",` +
-                    `"${p.remarks}",` +
-                    `${p.s1},` +
-                    `${p.s2},` +
-                    `${p.s3},` +
-                    `${p.s4},` +
-                    `${p.s5},` +
-                    `${p.s6},` +
-                    `${p.s7},` +
-                    `${total},` +
-                    `${variance}\n`;
-
-            });
-
-
-            const blob =
-                new Blob(
-                    [csv],
-                    {
-                        type:
-                            'text/csv;charset=utf-8;'
-                    }
-                );
-
-
-            const url =
-                URL.createObjectURL(blob);
-
-
-            const link =
-                document.createElement('a');
-
-
-            link.href = url;
-
-            link.download =
-                'AZTAD_Procurement_Mobile.csv';
-
-
-            document.body.appendChild(link);
-
-            link.click();
-
-            document.body.removeChild(link);
-
-            URL.revokeObjectURL(url);
-
-        }
-
-
-        /* ========================================================
-           FUTURE FEATURES
-        ======================================================== */
-
-        showSupplierMessage() {
-
-            alert(
-                'Supplier registration form can be connected here.'
+        const exists =
+            shipments.some(
+                shipment =>
+                    shipment.id ===
+                    newShipment.id
             );
 
-        }
 
+        if (!exists) {
 
-        showReorderMessage() {
-
-            alert(
-                'Material creation form can be connected here.'
+            shipments.unshift(
+                newShipment
             );
 
         }
@@ -4010,34 +1009,1350 @@
     }
 
 
-    /* ============================================================
-       START APP
-    ============================================================ */
+    /* UPDATE */
 
-    const app =
-        new ApplicationCore();
+    else if (
+        payload.eventType === "UPDATE"
+    ) {
+
+        const updatedShipment =
+            payload.new;
 
 
-    /* ============================================================
-       PREVENT MODAL BACKGROUND SCROLL
-    ============================================================ */
+        const index =
+            shipments.findIndex(
+                shipment =>
+                    shipment.id ===
+                    updatedShipment.id
+            );
 
-    document
-        .getElementById('shipment-modal')
-        .addEventListener(
-            'click',
-            function(event) {
 
-                if (
-                    event.target === this
-                ) {
+        if (index !== -1) {
 
-                    app.closeModal();
+            shipments[index] =
+                updatedShipment;
 
+        }
+
+        else {
+
+            shipments.unshift(
+                updatedShipment
+            );
+
+        }
+
+    }
+
+
+    /* DELETE */
+
+    else if (
+        payload.eventType === "DELETE"
+    ) {
+
+        const deletedShipment =
+            payload.old;
+
+
+        shipments =
+            shipments.filter(
+                shipment =>
+                    shipment.id !==
+                    deletedShipment.id
+            );
+
+    }
+
+
+    renderShipments();
+
+    updateDashboard();
+
+}
+
+
+/* =========================================================
+   SAVE SHIPMENT
+========================================================= */
+
+async function saveShipment(event) {
+
+    event.preventDefault();
+
+
+    if (isSaving) {
+
+        return;
+
+    }
+
+
+    isSaving = true;
+
+
+    const saveButton =
+        document.getElementById(
+            "saveButton"
+        );
+
+
+    saveButton.disabled = true;
+
+    saveButton.textContent =
+        "Saving...";
+
+
+    try {
+
+        const id =
+            document.getElementById(
+                "shipmentId"
+            ).value;
+
+
+        const shipment = {
+
+            shipment_number:
+                document.getElementById(
+                    "shipmentNumber"
+                ).value.trim(),
+
+            supplier:
+                document.getElementById(
+                    "supplier"
+                ).value.trim(),
+
+            origin:
+                document.getElementById(
+                    "origin"
+                ).value.trim(),
+
+            destination:
+                document.getElementById(
+                    "destination"
+                ).value.trim(),
+
+            status:
+                document.getElementById(
+                    "shipmentStatus"
+                ).value,
+
+            lead_time:
+                document.getElementById(
+                    "leadTime"
+                ).value.trim(),
+
+            eta:
+                document.getElementById(
+                    "eta"
+                ).value || null,
+
+            tracking_number:
+                document.getElementById(
+                    "trackingNumber"
+                ).value.trim(),
+
+            description:
+                document.getElementById(
+                    "description"
+                ).value.trim(),
+
+            updated_at:
+                new Date().toISOString()
+
+        };
+
+
+        /* -------------------------------------------------
+           If editing an existing shipment, include ID
+        ------------------------------------------------- */
+
+        if (id) {
+
+            shipment.id = id;
+
+        }
+
+
+        console.log(
+            "Saving shipment:",
+            shipment
+        );
+
+
+        /* -------------------------------------------------
+           SAVE DIRECTLY TO SUPABASE
+        ------------------------------------------------- */
+
+        const {
+            data,
+            error
+        } = await db
+            .from("shipments")
+            .upsert(
+                shipment,
+                {
+                    onConflict: "id"
                 }
+            )
+            .select()
+            .single();
+
+
+        if (error) {
+
+            console.error(
+                "Supabase save error:",
+                error
+            );
+
+            alert(
+                "Failed to save shipment:\n\n" +
+                error.message
+            );
+
+            return;
+
+        }
+
+
+        console.log(
+            "Shipment saved:",
+            data
+        );
+
+
+        /* -------------------------------------------------
+           Update local UI immediately
+        ------------------------------------------------- */
+
+        updateLocalShipment(
+            data
+        );
+
+
+        renderShipments();
+
+        updateDashboard();
+
+
+        closeShipmentModal();
+
+
+        showSuccess(
+            "Shipment saved successfully."
+        );
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert(
+            "An unexpected error occurred while saving."
+        );
+
+    }
+
+    finally {
+
+        isSaving = false;
+
+        saveButton.disabled = false;
+
+        saveButton.textContent =
+            "Save Shipment";
+
+    }
+
+}
+
+
+/* =========================================================
+   UPDATE LOCAL SHIPMENT
+========================================================= */
+
+function updateLocalShipment(
+    shipment
+) {
+
+    const index =
+        shipments.findIndex(
+            item =>
+                item.id ===
+                shipment.id
+        );
+
+
+    if (index !== -1) {
+
+        shipments[index] =
+            shipment;
+
+    }
+
+    else {
+
+        shipments.unshift(
+            shipment
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   QUICK STATUS UPDATE
+========================================================= */
+
+async function changeShipmentStatus(
+    id,
+    status
+) {
+
+    if (!id || !status) {
+
+        return;
+
+    }
+
+
+    try {
+
+        console.log(
+            "Updating status:",
+            id,
+            status
+        );
+
+
+        const {
+            data,
+            error
+        } = await db
+            .from("shipments")
+            .upsert(
+                {
+                    id: id,
+
+                    status: status,
+
+                    updated_at:
+                        new Date().toISOString()
+                },
+                {
+                    onConflict: "id"
+                }
+            )
+            .select()
+            .single();
+
+
+        if (error) {
+
+            console.error(
+                error
+            );
+
+            alert(
+                "Failed to update status:\n\n" +
+                error.message
+            );
+
+            return;
+
+        }
+
+
+        updateLocalShipment(
+            data
+        );
+
+
+        renderShipments();
+
+        updateDashboard();
+
+
+        console.log(
+            "Status updated:",
+            data
+        );
+
+
+    } catch (error) {
+
+        console.error(error);
+
+    }
+
+}
+
+
+/* =========================================================
+   QUICK LEAD TIME UPDATE
+========================================================= */
+
+async function changeLeadTime(
+    id,
+    leadTime
+) {
+
+    if (!id) {
+
+        return;
+
+    }
+
+
+    try {
+
+        const {
+            data,
+            error
+        } = await db
+            .from("shipments")
+            .upsert(
+                {
+                    id: id,
+
+                    lead_time:
+                        leadTime,
+
+                    updated_at:
+                        new Date().toISOString()
+                },
+                {
+                    onConflict: "id"
+                }
+            )
+            .select()
+            .single();
+
+
+        if (error) {
+
+            console.error(
+                error
+            );
+
+            alert(
+                "Failed to update lead time:\n\n" +
+                error.message
+            );
+
+            return;
+
+        }
+
+
+        updateLocalShipment(
+            data
+        );
+
+
+        renderShipments();
+
+        updateDashboard();
+
+
+    } catch (error) {
+
+        console.error(error);
+
+    }
+
+}
+
+
+/* =========================================================
+   RENDER SHIPMENTS
+========================================================= */
+
+function renderShipments() {
+
+    const tbody =
+        document.getElementById(
+            "shipmentTableBody"
+        );
+
+
+    const search =
+        document.getElementById(
+            "searchInput"
+        ).value
+        .toLowerCase()
+        .trim();
+
+
+    const statusFilter =
+        document.getElementById(
+            "statusFilter"
+        ).value;
+
+
+    let filtered =
+        shipments.filter(
+            shipment => {
+
+                const searchable = [
+
+                    shipment.shipment_number,
+
+                    shipment.supplier,
+
+                    shipment.origin,
+
+                    shipment.destination,
+
+                    shipment.tracking_number,
+
+                    shipment.status
+
+                ]
+                .filter(Boolean)
+                .join(" ")
+                .toLowerCase();
+
+
+                const matchesSearch =
+                    !search ||
+                    searchable.includes(
+                        search
+                    );
+
+
+                const matchesStatus =
+                    !statusFilter ||
+                    shipment.status ===
+                    statusFilter;
+
+
+                return (
+                    matchesSearch &&
+                    matchesStatus
+                );
 
             }
         );
+
+
+    document.getElementById(
+        "shipmentCount"
+    ).textContent =
+        `${filtered.length} records`;
+
+
+    if (!filtered.length) {
+
+        tbody.innerHTML = `
+
+            <tr>
+
+                <td
+                    colspan="8"
+                    class="text-center py-12 text-slate-400">
+
+                    No shipments found.
+
+                </td>
+
+            </tr>
+
+        `;
+
+        return;
+
+    }
+
+
+    tbody.innerHTML =
+        filtered.map(
+            shipment =>
+                shipmentRow(
+                    shipment
+                )
+        ).join("");
+
+}
+
+
+/* =========================================================
+   SHIPMENT ROW
+========================================================= */
+
+function shipmentRow(
+    shipment
+) {
+
+    const status =
+        shipment.status ||
+        "Pending";
+
+
+    return `
+
+        <tr>
+
+            <td>
+
+                <div class="font-bold">
+                    ${escapeHTML(
+                        shipment.shipment_number ||
+                        "—"
+                    )}
+                </div>
+
+                ${
+                    shipment.tracking_number
+                    ?
+                    `
+                    <div class="text-xs text-slate-400 mt-1">
+                        ${escapeHTML(
+                            shipment.tracking_number
+                        )}
+                    </div>
+                    `
+                    :
+                    ""
+                }
+
+            </td>
+
+
+            <td>
+                ${escapeHTML(
+                    shipment.supplier ||
+                    "—"
+                )}
+            </td>
+
+
+            <td>
+                ${escapeHTML(
+                    shipment.origin ||
+                    "—"
+                )}
+            </td>
+
+
+            <td>
+                ${escapeHTML(
+                    shipment.destination ||
+                    "—"
+                )}
+            </td>
+
+
+            <td>
+
+                <select
+                    class="input text-xs"
+                    style="min-width:130px"
+                    onchange="
+                        changeShipmentStatus(
+                            '${escapeAttribute(
+                                shipment.id
+                            )}',
+                            this.value
+                        )
+                    ">
+
+                    ${statusOptions(
+                        status
+                    )}
+
+                </select>
+
+            </td>
+
+
+            <td>
+
+                <div class="flex items-center gap-2">
+
+                    <input
+                        type="text"
+                        value="${escapeAttribute(
+                            shipment.lead_time ||
+                            ""
+                        )}"
+                        class="input text-xs"
+                        style="width:100px"
+                        onchange="
+                            changeLeadTime(
+                                '${escapeAttribute(
+                                    shipment.id
+                                )}',
+                                this.value
+                            )
+                        "
+                    >
+
+                </div>
+
+            </td>
+
+
+            <td>
+
+                ${
+                    shipment.eta
+                    ?
+                    formatDate(
+                        shipment.eta
+                    )
+                    :
+                    "—"
+                }
+
+            </td>
+
+
+            <td>
+
+                <button
+                    onclick="
+                        editShipment(
+                            '${escapeAttribute(
+                                shipment.id
+                            )}'
+                        )
+                    "
+                    class="btn btn-secondary text-xs">
+
+                    Edit
+
+                </button>
+
+            </td>
+
+        </tr>
+
+    `;
+
+}
+
+
+/* =========================================================
+   STATUS OPTIONS
+========================================================= */
+
+function statusOptions(
+    selected
+) {
+
+    const statuses = [
+
+        "Pending",
+
+        "Processing",
+
+        "In Transit",
+
+        "Delivered",
+
+        "Delayed",
+
+        "Cancelled"
+
+    ];
+
+
+    return statuses
+        .map(
+            status => `
+
+                <option
+                    value="${status}"
+                    ${
+                        selected === status
+                        ? "selected"
+                        : ""
+                    }>
+
+                    ${status}
+
+                </option>
+
+            `
+        )
+        .join("");
+
+}
+
+
+/* =========================================================
+   OPEN ADD SHIPMENT MODAL
+========================================================= */
+
+function openShipmentModal() {
+
+    document.getElementById(
+        "shipmentForm"
+    ).reset();
+
+
+    document.getElementById(
+        "shipmentId"
+    ).value = "";
+
+
+    document.getElementById(
+        "modalTitle"
+    ).textContent =
+        "Add Shipment";
+
+
+    document.getElementById(
+        "shipmentStatus"
+    ).value =
+        "Pending";
+
+
+    document.getElementById(
+        "shipmentModal"
+    ).classList.add(
+        "active"
+    );
+
+}
+
+
+/* =========================================================
+   EDIT SHIPMENT
+========================================================= */
+
+function editShipment(
+    id
+) {
+
+    const shipment =
+        shipments.find(
+            item =>
+                String(item.id) ===
+                String(id)
+        );
+
+
+    if (!shipment) {
+
+        alert(
+            "Shipment not found."
+        );
+
+        return;
+
+    }
+
+
+    document.getElementById(
+        "shipmentId"
+    ).value =
+        shipment.id || "";
+
+
+    document.getElementById(
+        "shipmentNumber"
+    ).value =
+        shipment.shipment_number ||
+        "";
+
+
+    document.getElementById(
+        "supplier"
+    ).value =
+        shipment.supplier ||
+        "";
+
+
+    document.getElementById(
+        "origin"
+    ).value =
+        shipment.origin ||
+        "";
+
+
+    document.getElementById(
+        "destination"
+    ).value =
+        shipment.destination ||
+        "";
+
+
+    document.getElementById(
+        "shipmentStatus"
+    ).value =
+        shipment.status ||
+        "Pending";
+
+
+    document.getElementById(
+        "leadTime"
+    ).value =
+        shipment.lead_time ||
+        "";
+
+
+    document.getElementById(
+        "eta"
+    ).value =
+        shipment.eta ||
+        "";
+
+
+    document.getElementById(
+        "trackingNumber"
+    ).value =
+        shipment.tracking_number ||
+        "";
+
+
+    document.getElementById(
+        "description"
+    ).value =
+        shipment.description ||
+        "";
+
+
+    document.getElementById(
+        "modalTitle"
+    ).textContent =
+        "Edit Shipment";
+
+
+    document.getElementById(
+        "shipmentModal"
+    ).classList.add(
+        "active"
+    );
+
+}
+
+
+/* =========================================================
+   CLOSE MODAL
+========================================================= */
+
+function closeShipmentModal() {
+
+    document.getElementById(
+        "shipmentModal"
+    ).classList.remove(
+        "active"
+    );
+
+}
+
+
+/* =========================================================
+   REFRESH
+========================================================= */
+
+async function refreshShipments() {
+
+    await loadShipments();
+
+}
+
+
+/* =========================================================
+   DASHBOARD STATISTICS
+========================================================= */
+
+function updateDashboard() {
+
+    const total =
+        shipments.length;
+
+
+    const pending =
+        shipments.filter(
+            s =>
+                s.status ===
+                "Pending"
+        ).length;
+
+
+    const transit =
+        shipments.filter(
+            s =>
+                s.status ===
+                "In Transit"
+        ).length;
+
+
+    const delivered =
+        shipments.filter(
+            s =>
+                s.status ===
+                "Delivered"
+        ).length;
+
+
+    const delayed =
+        shipments.filter(
+            s =>
+                s.status ===
+                "Delayed"
+        ).length;
+
+
+    document.getElementById(
+        "totalShipments"
+    ).textContent =
+        total;
+
+
+    document.getElementById(
+        "pendingShipments"
+    ).textContent =
+        pending;
+
+
+    document.getElementById(
+        "transitShipments"
+    ).textContent =
+        transit;
+
+
+    document.getElementById(
+        "deliveredShipments"
+    ).textContent =
+        delivered;
+
+
+    document.getElementById(
+        "delayedShipments"
+    ).textContent =
+        delayed;
+
+}
+
+
+/* =========================================================
+   CONNECTION STATUS
+========================================================= */
+
+function setConnectionStatus(
+    state,
+    text
+) {
+
+    const dot =
+        document.getElementById(
+            "connectionDot"
+        );
+
+
+    const label =
+        document.getElementById(
+            "connectionText"
+        );
+
+
+    dot.className =
+        "connection-dot";
+
+
+    if (state === "online") {
+
+        dot.classList.add(
+            "online"
+        );
+
+    }
+
+    else if (
+        state === "offline"
+    ) {
+
+        dot.classList.add(
+            "offline"
+        );
+
+    }
+
+    else {
+
+        dot.classList.add(
+            "connecting"
+        );
+
+    }
+
+
+    label.textContent =
+        text;
+
+}
+
+
+/* =========================================================
+   SUCCESS MESSAGE
+========================================================= */
+
+function showSuccess(
+    message
+) {
+
+    createToast(
+        message,
+        "success"
+    );
+
+}
+
+
+/* =========================================================
+   ERROR MESSAGE
+========================================================= */
+
+function showError(
+    message
+) {
+
+    createToast(
+        message,
+        "error"
+    );
+
+}
+
+
+/* =========================================================
+   TOAST
+========================================================= */
+
+function createToast(
+    message,
+    type
+) {
+
+    const toast =
+        document.createElement(
+            "div"
+        );
+
+
+    toast.style.position =
+        "fixed";
+
+    toast.style.bottom =
+        "20px";
+
+    toast.style.right =
+        "20px";
+
+    toast.style.zIndex =
+        "9999";
+
+    toast.style.padding =
+        "14px 18px";
+
+    toast.style.borderRadius =
+        "12px";
+
+    toast.style.fontWeight =
+        "700";
+
+    toast.style.fontSize =
+        "14px";
+
+    toast.style.maxWidth =
+        "350px";
+
+
+    if (type === "success") {
+
+        toast.style.background =
+            "#166534";
+
+        toast.style.color =
+            "white";
+
+    }
+
+    else {
+
+        toast.style.background =
+            "#991b1b";
+
+        toast.style.color =
+            "white";
+
+    }
+
+
+    toast.textContent =
+        message;
+
+
+    document.body.appendChild(
+        toast
+    );
+
+
+    setTimeout(
+        () => {
+
+            toast.remove();
+
+        },
+        3500
+    );
+
+}
+
+
+/* =========================================================
+   FORMAT DATE
+========================================================= */
+
+function formatDate(
+    date
+) {
+
+    if (!date) {
+
+        return "—";
+
+    }
+
+
+    const d =
+        new Date(date);
+
+
+    if (
+        Number.isNaN(
+            d.getTime()
+        )
+    ) {
+
+        return escapeHTML(
+            date
+        );
+
+    }
+
+
+    return d.toLocaleDateString(
+        undefined,
+        {
+            year: "numeric",
+            month: "short",
+            day: "numeric"
+        }
+    );
+
+}
+
+
+/* =========================================================
+   HTML ESCAPE
+========================================================= */
+
+function escapeHTML(
+    value
+) {
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
+
+        return "";
+
+    }
+
+
+    return String(value)
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
+}
+
+
+/* =========================================================
+   ATTRIBUTE ESCAPE
+========================================================= */
+
+function escapeAttribute(
+    value
+) {
+
+    return escapeHTML(
+        value
+    );
+
+}
+
+
+/* =========================================================
+   CLOSE MODAL WHEN CLICKING OUTSIDE
+========================================================= */
+
+document
+    .getElementById(
+        "shipmentModal"
+    )
+    .addEventListener(
+        "click",
+        function(event) {
+
+            if (
+                event.target ===
+                this
+            ) {
+
+                closeShipmentModal();
+
+            }
+
+        }
+    );
+
+
+/* =========================================================
+   KEYBOARD ESCAPE
+========================================================= */
+
+document.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (
+            event.key ===
+            "Escape"
+        ) {
+
+            closeShipmentModal();
+
+        }
+
+    }
+);
 
 </script>
 

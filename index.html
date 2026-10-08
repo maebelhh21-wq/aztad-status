@@ -30,35 +30,12 @@
         font-weight: 700;
     }
 
-    .status-pending {
-        background: #fef3c7;
-        color: #92400e;
-    }
-
-    .status-in-transit {
-        background: #dbeafe;
-        color: #1d4ed8;
-    }
-
-    .status-delivered {
-        background: #dcfce7;
-        color: #166534;
-    }
-
-    .status-delayed {
-        background: #fee2e2;
-        color: #991b1b;
-    }
-
-    .status-cancelled {
-        background: #e5e7eb;
-        color: #374151;
-    }
-
-    .status-processing {
-        background: #ede9fe;
-        color: #6d28d9;
-    }
+    .status-pending { background: #fef3c7; color: #92400e; }
+    .status-in-transit { background: #dbeafe; color: #1d4ed8; }
+    .status-delivered { background: #dcfce7; color: #166534; }
+    .status-delayed { background: #fee2e2; color: #991b1b; }
+    .status-cancelled { background: #e5e7eb; color: #374151; }
+    .status-processing { background: #ede9fe; color: #6d28d9; }
 
     .card {
         background: white;
@@ -150,24 +127,10 @@
         transform: translateY(-1px);
     }
 
-    .btn-primary {
-        background: #2563eb;
-        color: white;
-    }
-
-    .btn-primary:hover {
-        background: #1d4ed8;
-    }
-
-    .btn-secondary {
-        background: #e2e8f0;
-        color: #334155;
-    }
-
-    .btn-danger {
-        background: #fee2e2;
-        color: #b91c1c;
-    }
+    .btn-primary { background: #2563eb; color: white; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-secondary { background: #e2e8f0; color: #334155; }
+    .btn-danger { background: #fee2e2; color: #b91c1c; }
 
     .connection-dot {
         width: 9px;
@@ -176,2185 +139,487 @@
         display: inline-block;
     }
 
-    .online {
-        background: #22c55e;
-    }
-
-    .offline {
-        background: #ef4444;
-    }
-
-    .connecting {
-        background: #f59e0b;
-    }
+    .online { background: #22c55e; }
+    .offline { background: #ef4444; }
+    .connecting { background: #f59e0b; }
 
     @media (max-width: 768px) {
-
-        .desktop-only {
-            display: none;
-        }
-
-        .mobile-stack {
-            flex-direction: column;
-        }
-
-        .mobile-full {
-            width: 100%;
-        }
-
-        .modal-box {
-            padding: 18px;
-        }
-
-        td,
-        th {
-            padding: 11px 12px;
-        }
+        .mobile-stack { flex-direction: column; }
+        .mobile-full { width: 100%; }
+        .modal-box { padding: 18px; }
+        td, th { padding: 11px 12px; }
     }
 </style>
 </head>
 
 <body>
 
-<!-- =========================
-     HEADER
-========================= -->
-
+<!-- HEADER -->
 <header class="bg-slate-950 text-white sticky top-0 z-50">
-
     <div class="max-w-7xl mx-auto px-4 py-4">
-
         <div class="flex items-center justify-between gap-4">
-
             <div>
-                <h1 class="text-xl font-bold">
-                    AZTAD
-                </h1>
-
-                <p class="text-xs text-slate-400">
-                    Enterprise Procurement & MRP
-                </p>
+                <h1 class="text-xl font-bold">AZTAD</h1>
+                <p class="text-xs text-slate-400">Enterprise Procurement & MRP</p>
             </div>
-
             <div class="flex items-center gap-2 text-xs">
-
-                <span id="connectionDot"
-                      class="connection-dot connecting">
-                </span>
-
-                <span id="connectionText">
-                    Connecting...
-                </span>
-
+                <span id="connectionDot" class="connection-dot connecting"></span>
+                <span id="connectionText">Connecting...</span>
             </div>
-
         </div>
-
     </div>
-
 </header>
 
-
-<!-- =========================
-     MAIN
-========================= -->
-
+<!-- MAIN -->
 <main class="max-w-7xl mx-auto px-4 py-6">
 
     <!-- Page Header -->
-
     <div class="flex items-center justify-between gap-4 mb-6 mobile-stack">
-
         <div>
-            <h2 class="text-2xl font-bold">
-                Shipment Management
-            </h2>
-
-            <p class="text-sm text-slate-500 mt-1">
-                Manage shipment status, lead times and logistics information.
-            </p>
+            <h2 class="text-2xl font-bold">Shipment Management</h2>
+            <p class="text-sm text-slate-500 mt-1">Manage shipment status, lead times and logistics information.</p>
         </div>
-
-        <button
-            onclick="openShipmentModal()"
-            class="btn btn-primary mobile-full">
+        <button onclick="openShipmentModal()" class="btn btn-primary mobile-full">
             + Add Shipment
         </button>
-
     </div>
 
-
-    <!-- =========================
-         DASHBOARD CARDS
-    ========================= -->
-
+    <!-- DASHBOARD CARDS -->
     <section class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-
         <div class="card p-4">
-            <p class="text-xs text-slate-500">
-                Total Shipments
-            </p>
-
-            <p id="totalShipments"
-               class="text-2xl font-bold mt-2">
-                0
-            </p>
+            <p class="text-xs text-slate-500">Total Shipments</p>
+            <p id="totalShipments" class="text-2xl font-bold mt-2">0</p>
         </div>
-
         <div class="card p-4">
-            <p class="text-xs text-slate-500">
-                Pending
-            </p>
-
-            <p id="pendingShipments"
-               class="text-2xl font-bold mt-2 text-amber-600">
-                0
-            </p>
+            <p class="text-xs text-slate-500">Pending</p>
+            <p id="pendingShipments" class="text-2xl font-bold mt-2 text-amber-600">0</p>
         </div>
-
         <div class="card p-4">
-            <p class="text-xs text-slate-500">
-                In Transit
-            </p>
-
-            <p id="transitShipments"
-               class="text-2xl font-bold mt-2 text-blue-600">
-                0
-            </p>
+            <p class="text-xs text-slate-500">In Transit</p>
+            <p id="transitShipments" class="text-2xl font-bold mt-2 text-blue-600">0</p>
         </div>
-
         <div class="card p-4">
-            <p class="text-xs text-slate-500">
-                Delivered
-            </p>
-
-            <p id="deliveredShipments"
-               class="text-2xl font-bold mt-2 text-green-600">
-                0
-            </p>
+            <p class="text-xs text-slate-500">Delivered</p>
+            <p id="deliveredShipments" class="text-2xl font-bold mt-2 text-green-600">0</p>
         </div>
-
         <div class="card p-4">
-            <p class="text-xs text-slate-500">
-                Delayed
-            </p>
-
-            <p id="delayedShipments"
-               class="text-2xl font-bold mt-2 text-red-600">
-                0
-            </p>
+            <p class="text-xs text-slate-500">Delayed</p>
+            <p id="delayedShipments" class="text-2xl font-bold mt-2 text-red-600">0</p>
         </div>
-
     </section>
 
-
-    <!-- =========================
-         SEARCH / FILTER
-    ========================= -->
-
+    <!-- SEARCH / FILTER -->
     <section class="card p-4 mb-6">
-
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-
             <div>
-                <label class="block text-xs font-semibold text-slate-500 mb-1">
-                    Search
-                </label>
-
-                <input
-                    id="searchInput"
-                    type="text"
-                    class="input"
-                    placeholder="Search shipment..."
-                    oninput="renderShipments()">
+                <label class="block text-xs font-semibold text-slate-500 mb-1">Search</label>
+                <input id="searchInput" type="text" class="input" placeholder="Search shipment..." oninput="renderShipments()">
             </div>
-
-
             <div>
-                <label class="block text-xs font-semibold text-slate-500 mb-1">
-                    Status
-                </label>
-
-                <select
-                    id="statusFilter"
-                    class="input"
-                    onchange="renderShipments()">
-
-                    <option value="">
-                        All Statuses
-                    </option>
-
-                    <option value="Pending">
-                        Pending
-                    </option>
-
-                    <option value="Processing">
-                        Processing
-                    </option>
-
-                    <option value="In Transit">
-                        In Transit
-                    </option>
-
-                    <option value="Delivered">
-                        Delivered
-                    </option>
-
-                    <option value="Delayed">
-                        Delayed
-                    </option>
-
-                    <option value="Cancelled">
-                        Cancelled
-                    </option>
-
+                <label class="block text-xs font-semibold text-slate-500 mb-1">Status</label>
+                <select id="statusFilter" class="input" onchange="renderShipments()">
+                    <option value="">All Statuses</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Processing">Processing</option>
+                    <option value="In Transit">In Transit</option>
+                    <option value="Delivered">Delivered</option>
+                    <option value="Delayed">Delayed</option>
+                    <option value="Cancelled">Cancelled</option>
                 </select>
-
             </div>
-
-
             <div class="flex items-end">
-
-                <button
-                    onclick="refreshShipments()"
-                    class="btn btn-secondary w-full">
-
-                    ↻ Refresh
-
-                </button>
-
+                <button onclick="loadShipments()" class="btn btn-secondary w-full">↻ Refresh</button>
             </div>
-
         </div>
-
     </section>
 
-
-    <!-- =========================
-         SHIPMENT TABLE
-    ========================= -->
-
+    <!-- SHIPMENT TABLE -->
     <section class="card">
-
         <div class="flex items-center justify-between p-4 border-b">
-
             <div>
-
-                <h3 class="font-bold">
-                    Shipments
-                </h3>
-
-                <p class="text-xs text-slate-500 mt-1">
-                    Changes are synchronized automatically.
-                </p>
-
+                <h3 class="font-bold">Shipments</h3>
+                <p class="text-xs text-slate-500 mt-1">Changes are synchronized automatically.</p>
             </div>
-
-            <span
-                id="shipmentCount"
-                class="text-xs text-slate-500">
-                0 records
-            </span>
-
+            <span id="shipmentCount" class="text-xs text-slate-500">0 records</span>
         </div>
-
 
         <div class="table-container">
-
             <table>
-
                 <thead>
-
                     <tr>
-
-                        <th>
-                            Shipment
-                        </th>
-
-                        <th>
-                            Supplier
-                        </th>
-
-                        <th>
-                            Origin
-                        </th>
-
-                        <th>
-                            Destination
-                        </th>
-
-                        <th>
-                            Status
-                        </th>
-
-                        <th>
-                            Lead Time
-                        </th>
-
-                        <th>
-                            ETA
-                        </th>
-
-                        <th>
-                            Actions
-                        </th>
-
+                        <th>Shipment</th>
+                        <th>Supplier</th>
+                        <th>Origin</th>
+                        <th>Destination</th>
+                        <th>Status</th>
+                        <th>Lead Time</th>
+                        <th>ETA</th>
+                        <th>Actions</th>
                     </tr>
-
                 </thead>
-
-                <tbody id="shipmentTableBody">
-
-                </tbody>
-
+                <tbody id="shipmentTableBody"></tbody>
             </table>
-
         </div>
-
     </section>
-
 </main>
 
-
-<!-- =========================
-     SHIPMENT MODAL
-========================= -->
-
-<div
-    id="shipmentModal"
-    class="modal">
-
+<!-- SHIPMENT MODAL -->
+<div id="shipmentModal" class="modal">
     <div class="modal-box">
-
         <div class="flex items-center justify-between mb-6">
-
             <div>
-
-                <h3 id="modalTitle"
-                    class="text-xl font-bold">
-                    Add Shipment
-                </h3>
-
-                <p class="text-xs text-slate-500 mt-1">
-                    Shipment information
-                </p>
-
+                <h3 id="modalTitle" class="text-xl font-bold">Add Shipment</h3>
+                <p class="text-xs text-slate-500 mt-1">Shipment information</p>
             </div>
-
-            <button
-                onclick="closeShipmentModal()"
-                class="text-slate-400 hover:text-slate-700 text-xl">
-                ×
-            </button>
-
+            <button onclick="closeShipmentModal()" class="text-slate-400 hover:text-slate-700 text-xl">×</button>
         </div>
 
-
-        <form id="shipmentForm"
-              onsubmit="saveShipment(event)">
-
-            <input
-                type="hidden"
-                id="shipmentId">
-
+        <form id="shipmentForm" onsubmit="saveShipment(event)">
+            <input type="hidden" id="shipmentId">
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-
-                <!-- Shipment Number -->
-
                 <div>
-
-                    <label class="block text-sm font-semibold mb-1">
-                        Shipment Number
-                    </label>
-
-                    <input
-                        id="shipmentNumber"
-                        class="input"
-                        required
-                        placeholder="SHP-001">
-
+                    <label class="block text-sm font-semibold mb-1">Shipment Number</label>
+                    <input id="shipmentNumber" class="input" required placeholder="SHP-001">
                 </div>
-
-
-                <!-- Supplier -->
-
                 <div>
-
-                    <label class="block text-sm font-semibold mb-1">
-                        Supplier
-                    </label>
-
-                    <input
-                        id="supplier"
-                        class="input"
-                        placeholder="Supplier name">
-
+                    <label class="block text-sm font-semibold mb-1">Supplier</label>
+                    <input id="supplier" class="input" placeholder="Supplier name">
                 </div>
-
-
-                <!-- Origin -->
-
                 <div>
-
-                    <label class="block text-sm font-semibold mb-1">
-                        Origin
-                    </label>
-
-                    <input
-                        id="origin"
-                        class="input"
-                        placeholder="China">
-
+                    <label class="block text-sm font-semibold mb-1">Origin</label>
+                    <input id="origin" class="input" placeholder="China">
                 </div>
-
-
-                <!-- Destination -->
-
                 <div>
-
-                    <label class="block text-sm font-semibold mb-1">
-                        Destination
-                    </label>
-
-                    <input
-                        id="destination"
-                        class="input"
-                        placeholder="Addis Ababa">
-
+                    <label class="block text-sm font-semibold mb-1">Destination</label>
+                    <input id="destination" class="input" placeholder="Addis Ababa">
                 </div>
-
-
-                <!-- Status -->
-
                 <div>
-
-                    <label class="block text-sm font-semibold mb-1">
-                        Status
-                    </label>
-
-                    <select
-                        id="shipmentStatus"
-                        class="input">
-
-                        <option value="Pending">
-                            Pending
-                        </option>
-
-                        <option value="Processing">
-                            Processing
-                        </option>
-
-                        <option value="In Transit">
-                            In Transit
-                        </option>
-
-                        <option value="Delivered">
-                            Delivered
-                        </option>
-
-                        <option value="Delayed">
-                            Delayed
-                        </option>
-
-                        <option value="Cancelled">
-                            Cancelled
-                        </option>
-
+                    <label class="block text-sm font-semibold mb-1">Status</label>
+                    <select id="shipmentStatus" class="input">
+                        <option value="Pending">Pending</option>
+                        <option value="Processing">Processing</option>
+                        <option value="In Transit">In Transit</option>
+                        <option value="Delivered">Delivered</option>
+                        <option value="Delayed">Delayed</option>
+                        <option value="Cancelled">Cancelled</option>
                     </select>
-
                 </div>
-
-
-                <!-- Lead Time -->
-
                 <div>
-
-                    <label class="block text-sm font-semibold mb-1">
-                        Lead Time
-                    </label>
-
-                    <input
-                        id="leadTime"
-                        class="input"
-                        placeholder="30 days">
-
+                    <label class="block text-sm font-semibold mb-1">Lead Time</label>
+                    <input id="leadTime" class="input" placeholder="30 days">
                 </div>
-
-
-                <!-- ETA -->
-
                 <div>
-
-                    <label class="block text-sm font-semibold mb-1">
-                        ETA
-                    </label>
-
-                    <input
-                        id="eta"
-                        type="date"
-                        class="input">
-
+                    <label class="block text-sm font-semibold mb-1">ETA</label>
+                    <input id="eta" type="date" class="input">
                 </div>
-
-
-                <!-- Tracking -->
-
                 <div>
-
-                    <label class="block text-sm font-semibold mb-1">
-                        Tracking Number
-                    </label>
-
-                    <input
-                        id="trackingNumber"
-                        class="input"
-                        placeholder="Tracking number">
-
+                    <label class="block text-sm font-semibold mb-1">Tracking Number</label>
+                    <input id="trackingNumber" class="input" placeholder="Tracking number">
                 </div>
-
-
-                <!-- Description -->
-
                 <div class="md:col-span-2">
-
-                    <label class="block text-sm font-semibold mb-1">
-                        Description
-                    </label>
-
-                    <textarea
-                        id="description"
-                        class="input"
-                        rows="3"
-                        placeholder="Shipment details"></textarea>
-
+                    <label class="block text-sm font-semibold mb-1">Description</label>
+                    <textarea id="description" class="input" rows="3" placeholder="Shipment details"></textarea>
                 </div>
-
             </div>
-
-
-            <!-- Buttons -->
 
             <div class="flex justify-end gap-3 mt-6">
-
-                <button
-                    type="button"
-                    onclick="closeShipmentModal()"
-                    class="btn btn-secondary">
-
-                    Cancel
-
-                </button>
-
-                <button
-                    id="saveButton"
-                    type="submit"
-                    class="btn btn-primary">
-
-                    Save Shipment
-
-                </button>
-
+                <button type="button" onclick="closeShipmentModal()" class="btn btn-secondary">Cancel</button>
+                <button id="saveButton" type="submit" class="btn btn-primary">Save Shipment</button>
             </div>
-
         </form>
-
     </div>
-
 </div>
 
-
-<!-- =========================
-     JAVASCRIPT
-========================= -->
-
+<!-- JAVASCRIPT -->
 <script>
-
-/* =========================================================
-   SUPABASE CONFIGURATION
-========================================================= */
-
-const SUPABASE_URL = "YOUR_SUPABASE_URL";
-
+/* Replace these placeholders with your actual Supabase details */
+const SUPABASE_URL = "https://YOUR_SUPABASE_PROJECT_ID.supabase.co";
 const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
 
-
-/* =========================================================
-   CREATE SUPABASE CLIENT
-========================================================= */
-
-const db = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY
-);
-
-
-/* =========================================================
-   APPLICATION STATE
-========================================================= */
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let shipments = [];
-
 let realtimeChannel = null;
-
 let isSaving = false;
 
+document.addEventListener("DOMContentLoaded", async () => {
+    setConnectionStatus("connecting", "Connecting...");
+    await loadShipments();
+    setupRealtimeShipments();
+});
 
-/* =========================================================
-   PAGE LOAD
-========================================================= */
-
-document.addEventListener(
-    "DOMContentLoaded",
-    async () => {
-
-        setConnectionStatus(
-            "connecting",
-            "Connecting..."
-        );
-
-        await loadShipments();
-
-        setupRealtimeShipments();
-
+function setConnectionStatus(statusClass, textContent) {
+    const dot = document.getElementById("connectionDot");
+    const text = document.getElementById("connectionText");
+    if(dot && text) {
+        dot.className = `connection-dot ${statusClass}`;
+        text.textContent = textContent;
     }
-);
-
-
-/* =========================================================
-   LOAD SHIPMENTS FROM SUPABASE
-========================================================= */
-
-async function loadShipments() {
-
-    try {
-
-        const {
-            data,
-            error
-        } = await db
-            .from("shipments")
-            .select("*")
-            .order("created_at", {
-                ascending: false
-            });
-
-
-        if (error) {
-
-            console.error(
-                "Supabase load error:",
-                error
-            );
-
-            showError(
-                "Could not load shipments from Supabase."
-            );
-
-            setConnectionStatus(
-                "offline",
-                "Database Error"
-            );
-
-            return;
-
-        }
-
-
-        shipments = data || [];
-
-
-        renderShipments();
-
-        updateDashboard();
-
-
-        console.log(
-            "Shipments loaded:",
-            shipments
-        );
-
-
-    } catch (error) {
-
-        console.error(error);
-
-        showError(
-            "Unexpected error loading shipments."
-        );
-
-    }
-
 }
 
+async function loadShipments() {
+    try {
+        const { data, error } = await db
+            .from("shipments")
+            .select("*")
+            .order("created_at", { ascending: false });
 
-/* =========================================================
-   REALTIME SUPABASE LISTENER
-========================================================= */
+        if (error) {
+            console.error("Supabase load error:", error);
+            setConnectionStatus("offline", "Database Error");
+            return;
+        }
+
+        shipments = data || [];
+        renderShipments();
+        updateDashboard();
+    } catch (error) {
+        console.error("Load error:", error);
+    }
+}
 
 function setupRealtimeShipments() {
-
-    if (realtimeChannel) {
-
-        db.removeChannel(
-            realtimeChannel
-        );
-
-    }
-
+    if (realtimeChannel) db.removeChannel(realtimeChannel);
 
     realtimeChannel = db
         .channel("public:shipments")
-
-        .on(
-
-            "postgres_changes",
-
-            {
-                event: "*",
-                schema: "public",
-                table: "shipments"
-            },
-
-            handleRealtimeChange
-
-        )
-
-        .subscribe(
-
-            (status) => {
-
-                console.log(
-                    "Realtime status:",
-                    status
-                );
-
-
-                if (status === "SUBSCRIBED") {
-
-                    setConnectionStatus(
-                        "online",
-                        "Live"
-                    );
-
-                }
-
-                else if (
-                    status === "CHANNEL_ERROR" ||
-                    status === "TIMED_OUT"
-                ) {
-
-                    setConnectionStatus(
-                        "offline",
-                        "Realtime Error"
-                    );
-
-                }
-
-                else {
-
-                    setConnectionStatus(
-                        "connecting",
-                        status
-                    );
-
-                }
-
-            }
-
-        );
-
+        .on("postgres_changes", { event: "*", schema: "public", table: "shipments" }, handleRealtimeChange)
+        .subscribe((status) => {
+            if (status === "SUBSCRIBED") setConnectionStatus("online", "Live");
+            else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") setConnectionStatus("offline", "Realtime Error");
+            else setConnectionStatus("connecting", status);
+        });
 }
-
-
-/* =========================================================
-   HANDLE REALTIME CHANGES
-========================================================= */
 
 function handleRealtimeChange(payload) {
-
-    console.log(
-        "Realtime shipment change:",
-        payload
-    );
-
-
-    /* INSERT */
-
-    if (
-        payload.eventType === "INSERT"
-    ) {
-
-        const newShipment =
-            payload.new;
-
-
-        const exists =
-            shipments.some(
-                shipment =>
-                    shipment.id ===
-                    newShipment.id
-            );
-
-
-        if (!exists) {
-
-            shipments.unshift(
-                newShipment
-            );
-
-        }
-
+    if (payload.eventType === "INSERT") {
+        const newShipment = payload.new;
+        if (!shipments.some(s => s.id === newShipment.id)) shipments.unshift(newShipment);
+    } else if (payload.eventType === "UPDATE") {
+        const index = shipments.findIndex(s => s.id === payload.new.id);
+        if (index !== -1) shipments[index] = payload.new;
+        else shipments.unshift(payload.new);
+    } else if (payload.eventType === "DELETE") {
+        shipments = shipments.filter(s => s.id !== payload.old.id);
     }
-
-
-    /* UPDATE */
-
-    else if (
-        payload.eventType === "UPDATE"
-    ) {
-
-        const updatedShipment =
-            payload.new;
-
-
-        const index =
-            shipments.findIndex(
-                shipment =>
-                    shipment.id ===
-                    updatedShipment.id
-            );
-
-
-        if (index !== -1) {
-
-            shipments[index] =
-                updatedShipment;
-
-        }
-
-        else {
-
-            shipments.unshift(
-                updatedShipment
-            );
-
-        }
-
-    }
-
-
-    /* DELETE */
-
-    else if (
-        payload.eventType === "DELETE"
-    ) {
-
-        const deletedShipment =
-            payload.old;
-
-
-        shipments =
-            shipments.filter(
-                shipment =>
-                    shipment.id !==
-                    deletedShipment.id
-            );
-
-    }
-
 
     renderShipments();
-
     updateDashboard();
-
 }
-
-
-/* =========================================================
-   SAVE SHIPMENT
-========================================================= */
 
 async function saveShipment(event) {
-
     event.preventDefault();
-
-
-    if (isSaving) {
-
-        return;
-
-    }
-
-
+    if (isSaving) return;
     isSaving = true;
 
-
-    const saveButton =
-        document.getElementById(
-            "saveButton"
-        );
-
-
+    const saveButton = document.getElementById("saveButton");
     saveButton.disabled = true;
-
-    saveButton.textContent =
-        "Saving...";
-
+    saveButton.textContent = "Saving...";
 
     try {
-
-        const id =
-            document.getElementById(
-                "shipmentId"
-            ).value;
-
-
+        const id = document.getElementById("shipmentId").value;
         const shipment = {
-
-            shipment_number:
-                document.getElementById(
-                    "shipmentNumber"
-                ).value.trim(),
-
-            supplier:
-                document.getElementById(
-                    "supplier"
-                ).value.trim(),
-
-            origin:
-                document.getElementById(
-                    "origin"
-                ).value.trim(),
-
-            destination:
-                document.getElementById(
-                    "destination"
-                ).value.trim(),
-
-            status:
-                document.getElementById(
-                    "shipmentStatus"
-                ).value,
-
-            lead_time:
-                document.getElementById(
-                    "leadTime"
-                ).value.trim(),
-
-            eta:
-                document.getElementById(
-                    "eta"
-                ).value || null,
-
-            tracking_number:
-                document.getElementById(
-                    "trackingNumber"
-                ).value.trim(),
-
-            description:
-                document.getElementById(
-                    "description"
-                ).value.trim(),
-
-            updated_at:
-                new Date().toISOString()
-
+            shipment_number: document.getElementById("shipmentNumber").value.trim(),
+            supplier: document.getElementById("supplier").value.trim(),
+            origin: document.getElementById("origin").value.trim(),
+            destination: document.getElementById("destination").value.trim(),
+            status: document.getElementById("shipmentStatus").value,
+            lead_time: document.getElementById("leadTime").value.trim(),
+            eta: document.getElementById("eta").value || null,
+            tracking_number: document.getElementById("trackingNumber").value.trim(),
+            description: document.getElementById("description").value.trim(),
+            updated_at: new Date().toISOString()
         };
 
+        if (id) shipment.id = id;
 
-        /* -------------------------------------------------
-           If editing an existing shipment, include ID
-        ------------------------------------------------- */
-
-        if (id) {
-
-            shipment.id = id;
-
-        }
-
-
-        console.log(
-            "Saving shipment:",
-            shipment
-        );
-
-
-        /* -------------------------------------------------
-           SAVE DIRECTLY TO SUPABASE
-        ------------------------------------------------- */
-
-        const {
-            data,
-            error
-        } = await db
-            .from("shipments")
-            .upsert(
-                shipment,
-                {
-                    onConflict: "id"
-                }
-            )
-            .select()
-            .single();
-
+        const { data, error } = await db.from("shipments").upsert(shipment, { onConflict: "id" }).select().single();
 
         if (error) {
-
-            console.error(
-                "Supabase save error:",
-                error
-            );
-
-            alert(
-                "Failed to save shipment:\n\n" +
-                error.message
-            );
-
+            alert("Failed to save shipment: " + error.message);
             return;
-
         }
 
-
-        console.log(
-            "Shipment saved:",
-            data
-        );
-
-
-        /* -------------------------------------------------
-           Update local UI immediately
-        ------------------------------------------------- */
-
-        updateLocalShipment(
-            data
-        );
-
-
+        updateLocalShipment(data);
         renderShipments();
-
         updateDashboard();
-
-
         closeShipmentModal();
-
-
-        showSuccess(
-            "Shipment saved successfully."
-        );
-
-
     } catch (error) {
-
         console.error(error);
-
-        alert(
-            "An unexpected error occurred while saving."
-        );
-
-    }
-
-    finally {
-
+        alert("An error occurred while saving.");
+    } finally {
         isSaving = false;
-
         saveButton.disabled = false;
-
-        saveButton.textContent =
-            "Save Shipment";
-
+        saveButton.textContent = "Save Shipment";
     }
-
 }
 
-
-/* =========================================================
-   UPDATE LOCAL SHIPMENT
-========================================================= */
-
-function updateLocalShipment(
-    shipment
-) {
-
-    const index =
-        shipments.findIndex(
-            item =>
-                item.id ===
-                shipment.id
-        );
-
-
-    if (index !== -1) {
-
-        shipments[index] =
-            shipment;
-
-    }
-
-    else {
-
-        shipments.unshift(
-            shipment
-        );
-
-    }
-
+function updateLocalShipment(shipment) {
+    const index = shipments.findIndex(s => s.id === shipment.id);
+    if (index !== -1) shipments[index] = shipment;
+    else shipments.unshift(shipment);
 }
 
-
-/* =========================================================
-   QUICK STATUS UPDATE
-========================================================= */
-
-async function changeShipmentStatus(
-    id,
-    status
-) {
-
-    if (!id || !status) {
-
-        return;
-
-    }
-
-
+async function changeShipmentStatus(id, newStatus) {
+    if (!id || !newStatus) return;
     try {
-
-        console.log(
-            "Updating status:",
-            id,
-            status
-        );
-
-
-        const {
-            data,
-            error
-        } = await db
+        const { data, error } = await db
             .from("shipments")
-            .upsert(
-                {
-                    id: id,
-
-                    status: status,
-
-                    updated_at:
-                        new Date().toISOString()
-                },
-                {
-                    onConflict: "id"
-                }
-            )
+            .update({ status: newStatus, updated_at: new Date().toISOString() })
+            .eq("id", id)
             .select()
             .single();
 
-
-        if (error) {
-
-            console.error(
-                error
-            );
-
-            alert(
-                "Failed to update status:\n\n" +
-                error.message
-            );
-
-            return;
-
+        if (error) alert("Failed to update status: " + error.message);
+        else {
+            updateLocalShipment(data);
+            renderShipments();
+            updateDashboard();
         }
-
-
-        updateLocalShipment(
-            data
-        );
-
-
-        renderShipments();
-
-        updateDashboard();
-
-
-        console.log(
-            "Status updated:",
-            data
-        );
-
-
-    } catch (error) {
-
-        console.error(error);
-
+    } catch (err) {
+        console.error(err);
     }
-
 }
 
-
-/* =========================================================
-   QUICK LEAD TIME UPDATE
-========================================================= */
-
-async function changeLeadTime(
-    id,
-    leadTime
-) {
-
-    if (!id) {
-
-        return;
-
-    }
-
-
+async function changeLeadTime(id, newLeadTime) {
+    if (!id) return;
     try {
-
-        const {
-            data,
-            error
-        } = await db
+        const { data, error } = await db
             .from("shipments")
-            .upsert(
-                {
-                    id: id,
-
-                    lead_time:
-                        leadTime,
-
-                    updated_at:
-                        new Date().toISOString()
-                },
-                {
-                    onConflict: "id"
-                }
-            )
+            .update({ lead_time: newLeadTime, updated_at: new Date().toISOString() })
+            .eq("id", id)
             .select()
             .single();
 
-
-        if (error) {
-
-            console.error(
-                error
-            );
-
-            alert(
-                "Failed to update lead time:\n\n" +
-                error.message
-            );
-
-            return;
-
+        if (error) alert("Failed to update lead time: " + error.message);
+        else {
+            updateLocalShipment(data);
+            renderShipments();
+            updateDashboard();
         }
-
-
-        updateLocalShipment(
-            data
-        );
-
-
-        renderShipments();
-
-        updateDashboard();
-
-
-    } catch (error) {
-
-        console.error(error);
-
+    } catch (err) {
+        console.error(err);
     }
-
 }
 
-
-/* =========================================================
-   RENDER SHIPMENTS
-========================================================= */
-
-function renderShipments() {
-
-    const tbody =
-        document.getElementById(
-            "shipmentTableBody"
-        );
-
-
-    const search =
-        document.getElementById(
-            "searchInput"
-        ).value
-        .toLowerCase()
-        .trim();
-
-
-    const statusFilter =
-        document.getElementById(
-            "statusFilter"
-        ).value;
-
-
-    let filtered =
-        shipments.filter(
-            shipment => {
-
-                const searchable = [
-
-                    shipment.shipment_number,
-
-                    shipment.supplier,
-
-                    shipment.origin,
-
-                    shipment.destination,
-
-                    shipment.tracking_number,
-
-                    shipment.status
-
-                ]
-                .filter(Boolean)
-                .join(" ")
-                .toLowerCase();
-
-
-                const matchesSearch =
-                    !search ||
-                    searchable.includes(
-                        search
-                    );
-
-
-                const matchesStatus =
-                    !statusFilter ||
-                    shipment.status ===
-                    statusFilter;
-
-
-                return (
-                    matchesSearch &&
-                    matchesStatus
-                );
-
-            }
-        );
-
-
-    document.getElementById(
-        "shipmentCount"
-    ).textContent =
-        `${filtered.length} records`;
-
-
-    if (!filtered.length) {
-
-        tbody.innerHTML = `
-
-            <tr>
-
-                <td
-                    colspan="8"
-                    class="text-center py-12 text-slate-400">
-
-                    No shipments found.
-
-                </td>
-
-            </tr>
-
-        `;
-
-        return;
-
+async function deleteShipment(id) {
+    if (!confirm("Are you sure you want to delete this shipment?")) return;
+    try {
+        const { error } = await db.from("shipments").delete().eq("id", id);
+        if (error) alert("Failed to delete: " + error.message);
+        else {
+            shipments = shipments.filter(s => s.id !== id);
+            renderShipments();
+            updateDashboard();
+        }
+    } catch (err) {
+        console.error(err);
     }
-
-
-    tbody.innerHTML =
-        filtered.map(
-            shipment =>
-                shipmentRow(
-                    shipment
-                )
-        ).join("");
-
 }
-
-
-/* =========================================================
-   SHIPMENT ROW
-========================================================= */
-
-function shipmentRow(
-    shipment
-) {
-
-    const status =
-        shipment.status ||
-        "Pending";
-
-
-    return `
-
-        <tr>
-
-            <td>
-
-                <div class="font-bold">
-                    ${escapeHTML(
-                        shipment.shipment_number ||
-                        "—"
-                    )}
-                </div>
-
-                ${
-                    shipment.tracking_number
-                    ?
-                    `
-                    <div class="text-xs text-slate-400 mt-1">
-                        ${escapeHTML(
-                            shipment.tracking_number
-                        )}
-                    </div>
-                    `
-                    :
-                    ""
-                }
-
-            </td>
-
-
-            <td>
-                ${escapeHTML(
-                    shipment.supplier ||
-                    "—"
-                )}
-            </td>
-
-
-            <td>
-                ${escapeHTML(
-                    shipment.origin ||
-                    "—"
-                )}
-            </td>
-
-
-            <td>
-                ${escapeHTML(
-                    shipment.destination ||
-                    "—"
-                )}
-            </td>
-
-
-            <td>
-
-                <select
-                    class="input text-xs"
-                    style="min-width:130px"
-                    onchange="
-                        changeShipmentStatus(
-                            '${escapeAttribute(
-                                shipment.id
-                            )}',
-                            this.value
-                        )
-                    ">
-
-                    ${statusOptions(
-                        status
-                    )}
-
-                </select>
-
-            </td>
-
-
-            <td>
-
-                <div class="flex items-center gap-2">
-
-                    <input
-                        type="text"
-                        value="${escapeAttribute(
-                            shipment.lead_time ||
-                            ""
-                        )}"
-                        class="input text-xs"
-                        style="width:100px"
-                        onchange="
-                            changeLeadTime(
-                                '${escapeAttribute(
-                                    shipment.id
-                                )}',
-                                this.value
-                            )
-                        "
-                    >
-
-                </div>
-
-            </td>
-
-
-            <td>
-
-                ${
-                    shipment.eta
-                    ?
-                    formatDate(
-                        shipment.eta
-                    )
-                    :
-                    "—"
-                }
-
-            </td>
-
-
-            <td>
-
-                <button
-                    onclick="
-                        editShipment(
-                            '${escapeAttribute(
-                                shipment.id
-                            )}'
-                        )
-                    "
-                    class="btn btn-secondary text-xs">
-
-                    Edit
-
-                </button>
-
-            </td>
-
-        </tr>
-
-    `;
-
-}
-
-
-/* =========================================================
-   STATUS OPTIONS
-========================================================= */
-
-function statusOptions(
-    selected
-) {
-
-    const statuses = [
-
-        "Pending",
-
-        "Processing",
-
-        "In Transit",
-
-        "Delivered",
-
-        "Delayed",
-
-        "Cancelled"
-
-    ];
-
-
-    return statuses
-        .map(
-            status => `
-
-                <option
-                    value="${status}"
-                    ${
-                        selected === status
-                        ? "selected"
-                        : ""
-                    }>
-
-                    ${status}
-
-                </option>
-
-            `
-        )
-        .join("");
-
-}
-
-
-/* =========================================================
-   OPEN ADD SHIPMENT MODAL
-========================================================= */
-
-function openShipmentModal() {
-
-    document.getElementById(
-        "shipmentForm"
-    ).reset();
-
-
-    document.getElementById(
-        "shipmentId"
-    ).value = "";
-
-
-    document.getElementById(
-        "modalTitle"
-    ).textContent =
-        "Add Shipment";
-
-
-    document.getElementById(
-        "shipmentStatus"
-    ).value =
-        "Pending";
-
-
-    document.getElementById(
-        "shipmentModal"
-    ).classList.add(
-        "active"
-    );
-
-}
-
-
-/* =========================================================
-   EDIT SHIPMENT
-========================================================= */
-
-function editShipment(
-    id
-) {
-
-    const shipment =
-        shipments.find(
-            item =>
-                String(item.id) ===
-                String(id)
-        );
-
-
-    if (!shipment) {
-
-        alert(
-            "Shipment not found."
-        );
-
-        return;
-
-    }
-
-
-    document.getElementById(
-        "shipmentId"
-    ).value =
-        shipment.id || "";
-
-
-    document.getElementById(
-        "shipmentNumber"
-    ).value =
-        shipment.shipment_number ||
-        "";
-
-
-    document.getElementById(
-        "supplier"
-    ).value =
-        shipment.supplier ||
-        "";
-
-
-    document.getElementById(
-        "origin"
-    ).value =
-        shipment.origin ||
-        "";
-
-
-    document.getElementById(
-        "destination"
-    ).value =
-        shipment.destination ||
-        "";
-
-
-    document.getElementById(
-        "shipmentStatus"
-    ).value =
-        shipment.status ||
-        "Pending";
-
-
-    document.getElementById(
-        "leadTime"
-    ).value =
-        shipment.lead_time ||
-        "";
-
-
-    document.getElementById(
-        "eta"
-    ).value =
-        shipment.eta ||
-        "";
-
-
-    document.getElementById(
-        "trackingNumber"
-    ).value =
-        shipment.tracking_number ||
-        "";
-
-
-    document.getElementById(
-        "description"
-    ).value =
-        shipment.description ||
-        "";
-
-
-    document.getElementById(
-        "modalTitle"
-    ).textContent =
-        "Edit Shipment";
-
-
-    document.getElementById(
-        "shipmentModal"
-    ).classList.add(
-        "active"
-    );
-
-}
-
-
-/* =========================================================
-   CLOSE MODAL
-========================================================= */
-
-function closeShipmentModal() {
-
-    document.getElementById(
-        "shipmentModal"
-    ).classList.remove(
-        "active"
-    );
-
-}
-
-
-/* =========================================================
-   REFRESH
-========================================================= */
-
-async function refreshShipments() {
-
-    await loadShipments();
-
-}
-
-
-/* =========================================================
-   DASHBOARD STATISTICS
-========================================================= */
 
 function updateDashboard() {
-
-    const total =
-        shipments.length;
-
-
-    const pending =
-        shipments.filter(
-            s =>
-                s.status ===
-                "Pending"
-        ).length;
-
-
-    const transit =
-        shipments.filter(
-            s =>
-                s.status ===
-                "In Transit"
-        ).length;
-
-
-    const delivered =
-        shipments.filter(
-            s =>
-                s.status ===
-                "Delivered"
-        ).length;
-
-
-    const delayed =
-        shipments.filter(
-            s =>
-                s.status ===
-                "Delayed"
-        ).length;
-
-
-    document.getElementById(
-        "totalShipments"
-    ).textContent =
-        total;
-
-
-    document.getElementById(
-        "pendingShipments"
-    ).textContent =
-        pending;
-
-
-    document.getElementById(
-        "transitShipments"
-    ).textContent =
-        transit;
-
-
-    document.getElementById(
-        "deliveredShipments"
-    ).textContent =
-        delivered;
-
-
-    document.getElementById(
-        "delayedShipments"
-    ).textContent =
-        delayed;
-
+    document.getElementById("totalShipments").textContent = shipments.length;
+    document.getElementById("pendingShipments").textContent = shipments.filter(s => s.status === "Pending").length;
+    document.getElementById("transitShipments").textContent = shipments.filter(s => s.status === "In Transit").length;
+    document.getElementById("deliveredShipments").textContent = shipments.filter(s => s.status === "Delivered").length;
+    document.getElementById("delayedShipments").textContent = shipments.filter(s => s.status === "Delayed").length;
 }
 
+function renderShipments() {
+    const tbody = document.getElementById("shipmentTableBody");
+    const search = document.getElementById("searchInput").value.toLowerCase().trim();
+    const statusFilter = document.getElementById("statusFilter").value;
 
-/* =========================================================
-   CONNECTION STATUS
-========================================================= */
+    let filtered = shipments.filter(s => {
+        const text = [s.shipment_number, s.supplier, s.origin, s.destination, s.tracking_number, s.status].filter(Boolean).join(" ").toLowerCase();
+        const matchesSearch = !search || text.includes(search);
+        const matchesStatus = !statusFilter || s.status === statusFilter;
+        return matchesSearch && matchesStatus;
+    });
 
-function setConnectionStatus(
-    state,
-    text
-) {
+    document.getElementById("shipmentCount").textContent = `${filtered.length} records`;
 
-    const dot =
-        document.getElementById(
-            "connectionDot"
-        );
-
-
-    const label =
-        document.getElementById(
-            "connectionText"
-        );
-
-
-    dot.className =
-        "connection-dot";
-
-
-    if (state === "online") {
-
-        dot.classList.add(
-            "online"
-        );
-
+    if (!filtered.length) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-12 text-slate-400">No shipments found.</td></tr>`;
+        return;
     }
 
-    else if (
-        state === "offline"
-    ) {
-
-        dot.classList.add(
-            "offline"
-        );
-
-    }
-
-    else {
-
-        dot.classList.add(
-            "connecting"
-        );
-
-    }
-
-
-    label.textContent =
-        text;
-
+    tbody.innerHTML = filtered.map(s => shipmentRow(s)).join("");
 }
 
+function shipmentRow(s) {
+    const statuses = ["Pending", "Processing", "In Transit", "Delivered", "Delayed", "Cancelled"];
+    const statusOptions = statuses.map(st => `<option value="${st}" ${s.status === st ? 'selected' : ''}>${st}</option>`).join("");
 
-/* =========================================================
-   SUCCESS MESSAGE
-========================================================= */
-
-function showSuccess(
-    message
-) {
-
-    createToast(
-        message,
-        "success"
-    );
-
+    return `
+        <tr>
+            <td>
+                <div class="font-bold">${escapeHTML(s.shipment_number || '—')}</div>
+                ${s.tracking_number ? `<div class="text-xs text-slate-400 mt-1">${escapeHTML(s.tracking_number)}</div>` : ''}
+            </td>
+            <td>${escapeHTML(s.supplier || '—')}</td>
+            <td>${escapeHTML(s.origin || '—')}</td>
+            <td>${escapeHTML(s.destination || '—')}</td>
+            <td>
+                <select class="input text-xs" style="min-width:130px" onchange="changeShipmentStatus('${escapeAttribute(s.id)}', this.value)">
+                    ${statusOptions}
+                </select>
+            </td>
+            <td>
+                <input type="text" class="input text-xs" style="width:90px" value="${escapeHTML(s.lead_time || '')}" onchange="changeLeadTime('${escapeAttribute(s.id)}', this.value)" placeholder="Lead time">
+            </td>
+            <td>${s.eta || '—'}</td>
+            <td>
+                <div class="flex items-center gap-2">
+                    <button class="btn btn-secondary text-xs" onclick="openShipmentModal('${escapeAttribute(s.id)}')">Edit</button>
+                    <button class="btn btn-danger text-xs" onclick="deleteShipment('${escapeAttribute(s.id)}')">Delete</button>
+                </div>
+            </td>
+        </tr>
+    `;
 }
 
+function openShipmentModal(id = null) {
+    const modal = document.getElementById("shipmentModal");
+    const form = document.getElementById("shipmentForm");
+    form.reset();
+    document.getElementById("shipmentId").value = "";
 
-/* =========================================================
-   ERROR MESSAGE
-========================================================= */
-
-function showError(
-    message
-) {
-
-    createToast(
-        message,
-        "error"
-    );
-
-}
-
-
-/* =========================================================
-   TOAST
-========================================================= */
-
-function createToast(
-    message,
-    type
-) {
-
-    const toast =
-        document.createElement(
-            "div"
-        );
-
-
-    toast.style.position =
-        "fixed";
-
-    toast.style.bottom =
-        "20px";
-
-    toast.style.right =
-        "20px";
-
-    toast.style.zIndex =
-        "9999";
-
-    toast.style.padding =
-        "14px 18px";
-
-    toast.style.borderRadius =
-        "12px";
-
-    toast.style.fontWeight =
-        "700";
-
-    toast.style.fontSize =
-        "14px";
-
-    toast.style.maxWidth =
-        "350px";
-
-
-    if (type === "success") {
-
-        toast.style.background =
-            "#166534";
-
-        toast.style.color =
-            "white";
-
-    }
-
-    else {
-
-        toast.style.background =
-            "#991b1b";
-
-        toast.style.color =
-            "white";
-
-    }
-
-
-    toast.textContent =
-        message;
-
-
-    document.body.appendChild(
-        toast
-    );
-
-
-    setTimeout(
-        () => {
-
-            toast.remove();
-
-        },
-        3500
-    );
-
-}
-
-
-/* =========================================================
-   FORMAT DATE
-========================================================= */
-
-function formatDate(
-    date
-) {
-
-    if (!date) {
-
-        return "—";
-
-    }
-
-
-    const d =
-        new Date(date);
-
-
-    if (
-        Number.isNaN(
-            d.getTime()
-        )
-    ) {
-
-        return escapeHTML(
-            date
-        );
-
-    }
-
-
-    return d.toLocaleDateString(
-        undefined,
-        {
-            year: "numeric",
-            month: "short",
-            day: "numeric"
+    if (id) {
+        const s = shipments.find(item => item.id === id);
+        if (s) {
+            document.getElementById("modalTitle").textContent = "Edit Shipment";
+            document.getElementById("shipmentId").value = s.id;
+            document.getElementById("shipmentNumber").value = s.shipment_number || "";
+            document.getElementById("supplier").value = s.supplier || "";
+            document.getElementById("origin").value = s.origin || "";
+            document.getElementById("destination").value = s.destination || "";
+            document.getElementById("shipmentStatus").value = s.status || "Pending";
+            document.getElementById("leadTime").value = s.lead_time || "";
+            document.getElementById("eta").value = s.eta || "";
+            document.getElementById("trackingNumber").value = s.tracking_number || "";
+            document.getElementById("description").value = s.description || "";
         }
-    );
-
-}
-
-
-/* =========================================================
-   HTML ESCAPE
-========================================================= */
-
-function escapeHTML(
-    value
-) {
-
-    if (
-        value === null ||
-        value === undefined
-    ) {
-
-        return "";
-
+    } else {
+        document.getElementById("modalTitle").textContent = "Add Shipment";
     }
 
-
-    return String(value)
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-        .replace(
-            /</g,
-            "&lt;"
-        )
-        .replace(
-            />/g,
-            "&gt;"
-        )
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-        .replace(
-            /'/g,
-            "&#039;"
-        );
-
+    modal.classList.add("active");
 }
 
-
-/* =========================================================
-   ATTRIBUTE ESCAPE
-========================================================= */
-
-function escapeAttribute(
-    value
-) {
-
-    return escapeHTML(
-        value
-    );
-
+function closeShipmentModal() {
+    document.getElementById("shipmentModal").classList.remove("active");
 }
 
+function escapeHTML(str) {
+    return String(str || "").replace(/[&<>'"]/g, 
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+}
 
-/* =========================================================
-   CLOSE MODAL WHEN CLICKING OUTSIDE
-========================================================= */
-
-document
-    .getElementById(
-        "shipmentModal"
-    )
-    .addEventListener(
-        "click",
-        function(event) {
-
-            if (
-                event.target ===
-                this
-            ) {
-
-                closeShipmentModal();
-
-            }
-
-        }
-    );
-
-
-/* =========================================================
-   KEYBOARD ESCAPE
-========================================================= */
-
-document.addEventListener(
-    "keydown",
-    function(event) {
-
-        if (
-            event.key ===
-            "Escape"
-        ) {
-
-            closeShipmentModal();
-
-        }
-
-    }
-);
-
+function escapeAttribute(str) {
+    return String(str || "").replace(/'/g, "\\'");
+}
 </script>
-
 </body>
 </html>
